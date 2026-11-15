@@ -1,19 +1,19 @@
 # QA Checklist (manual play-through)
 
-Automated coverage: 39 Play Mode tests (`Assets/_Game/Tests/PlayMode/`: `GameplayTests.cs`, `ControlsAndLadderTests.cs`). Run them via **Window → General → Test Runner → PlayMode → Run All**. The items below are the things automation cannot judge: feel, readability, audio and visuals. Tick them while playing at 1920×1080 (Game view "Full HD"), then at one other resolution.
+Automated coverage: Play Mode tests in `Assets/_Game/Tests/PlayMode/` (`GameplayTests.cs`, `ControlsAndLadderTests.cs`, `StoryTests.cs`). Run them via **Window → General → Test Runner → PlayMode → Run All**. The items below are the things automation cannot judge: feel, readability, audio and visuals. Tick them while playing at 1920×1080 (Game view "Full HD"), then at one other resolution.
 
 ## Setup
 - [ ] Open `Assets/_Game/Scenes/MainMenu.unity` and press Play (or play the build in `Builds/Windows/`).
 - [ ] The Console shows no errors or warnings on entering Play Mode.
 
 ## Main menu
-- [ ] Music starts (*Perilous Dungeon*). The title, subtitle, diorama, hint line and four buttons are visible.
+- [ ] Music starts (*Perilous Dungeon*). The title, subtitle, the tagline *"Every gem is something you have forgotten."*, the diorama, the hint line and four buttons are visible.
 - [ ] Arrow keys move between buttons, with a highlight and a select sound; Enter activates.
 - [ ] The mouse hover highlight works, and clicking works.
 - [ ] **Settings:** both sliders change volume immediately, and the values persist after restarting Play Mode.
 - [ ] **Credits:** the text fits inside the panel and Back returns to the menu.
 - [ ] **Quit** stops Play Mode (in a build, the app closes).
-- [ ] **Play** fades to black, then into Level 1.
+- [ ] **Play** fades to black, then into the forest's opening cutscene (see *Story* below).
 
 ## Controls (keyboard only, no mouse)
 - [ ] ← / → move; ↑, Z and Space each jump; X shoots; Esc pauses. The mouse does nothing in gameplay.
@@ -62,7 +62,7 @@ Automated coverage: 39 Play Mode tests (`Assets/_Game/Tests/PlayMode/`: `Gamepla
 - [ ] Music is *Spooky Dungeon*. The portal leads to the Treasure Chamber.
 
 ## Boss — Treasure Chamber
-- [ ] Walking into the hall closes the portcullis behind you, starts the boss music, shows the "Guardian awakens" message, and brings up the health bar.
+- [ ] Walking into the hall closes the portcullis behind you, starts the boss music, and brings up the health bar (**The Keeper**). The dragon speaks before attacking.
 - [ ] Every attack is clearly telegraphed (flash and shake, red floor markers) before it can hurt you.
 - [ ] Fire Volley: fireballs fan out toward you, and the dragon can be hit with straight shots from the side platforms.
 - [ ] Dive Slam: the marker appears under you, the slam shakes the screen, and the dragon can be punished on the floor.
@@ -70,11 +70,45 @@ Automated coverage: 39 Play Mode tests (`Assets/_Game/Tests/PlayMode/`: `Gamepla
 - [ ] Below half health: an enraged tint and message, faster pacing, and shockwaves after slams.
 - [ ] Dying mid-fight then pressing Retry fully resets the boss (full bar), reopens the door and restores the pre-fight music.
 - [ ] Defeat: explosions, the dragon falls and fades, music fades out, and the gold chest appears.
-- [ ] Opening the chest showers gems and a message, then **Victory!** shows gems, time and deaths. Main Menu returns to the title.
+- [ ] Opening the chest starts the ending (see *Story* above) rather than a victory screen.
 - [ ] Difficulty feels fair for a short game. Note the number of attempts and the time taken.
 
+## Story: The Last Memory (see `Docs/STORY_SPEC.md`)
+Play once from **Play** in the main menu, without skipping. Note anything that feels too long, unclear or badly timed.
+
+**Opening and forest**
+- [ ] The opening starts black with letterbox bars. "...wait for me..." appears, then it fades in on the hero lying under the old tree, who stands up and speaks two lines. The title card *The Whispering Forest: The Awakening* follows, and control returns.
+- [ ] Esc does nothing during the opening or any dialogue. Z / Space / X / Enter / C finish a line, then advance. The key that closes a dialogue doesn't also jump or shoot.
+- [ ] Walking right, the tree dialogue plays once: the note "This time, don't open the chest.", then the notches. The number spoken matches the tally marks on the trunk, and the marks are readable at normal zoom.
+- [ ] The first gem shows a short thought at the bottom without stopping play.
+- [ ] The rusted lantern by the ruined gateway glints. Standing next to it shows "C  Examine", and C (or Enter) plays its lines.
+- [ ] Both forest memory shards can be reached (the ledge east of the ruins; the high ledge on the surface east of the cave entrance). Picking one up flashes the screen briefly and shows a memory. Restarting the level doesn't bring a found shard back.
+
+**Castle**
+- [ ] The déjà-vu thought appears near the start without stopping play.
+- [ ] The Faint Ghost (after the broken bridge) speaks four lines and then fades away. It never hurts the hero.
+- [ ] By the treasure door, "I was so close." and the tally marks are visible, and the hero says the matching count.
+- [ ] Both castle shards (the top of the watchtower; past the exit portal at the far east wall) can be reached.
+
+**Treasure chamber and ending**
+- [ ] After the portcullis falls and the dragon swoops in, the world is frozen while it speaks. No attack hits during the conversation. The fight starts right after, and the boss bar reads **The Keeper**.
+- [ ] Die and retry: the long conversation doesn't repeat; only "Again, then." appears.
+- [ ] On defeat, the dragon's four last lines play before it falls. Then the gold chest appears.
+- [ ] Opening the chest:
+  - The light swells and a small silhouette with a lantern appears. The reunion lines play, and the name is cut off.
+  - The silhouette dissolves, gems scatter, and the gem counter drains to 0.
+  - It fades to white, "No... not again...", then black, a knock, and the whisper.
+- [ ] Find all four shards in one cycle and finish it: the cut-off line becomes "Your name is... Li—".
+- [ ] The loop:
+  - The forest opening repeats word for word.
+  - The hero walks to the tree, and the newest notch glows. **There is one more notch than before.**
+  - "What chest?", then the caption *"Somewhere, a lantern is still burning."*, then the panel **The Last Memory** with sensible stats.
+- [ ] **Begin Again** gives control in the forest, with music and the title card. **Main Menu** works.
+- [ ] Quit, restart the game and play to the tree: the notch count is still the higher number (it is saved).
+- [ ] Overall pacing: the story never interrupts a jump or a fight, and no dialogue feels too long.
+
 ## Pause and UI
-- [ ] Esc pauses (gameplay freezes) and Esc again resumes. Pause doesn't open over the death or victory panels.
+- [ ] Esc pauses (gameplay freezes) and Esc again resumes. Pause doesn't open over the death or ending panels, or during dialogue and cutscenes.
 - [ ] Restart Level reloads the level and discards gems collected in it. Main Menu works from pause.
 - [ ] The HUD stays readable at 1280×720 and at 2560×1440.
 

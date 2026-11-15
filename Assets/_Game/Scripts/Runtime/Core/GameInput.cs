@@ -7,7 +7,8 @@ namespace TileVania
     /// Gameplay input built in code on top of the Input System, so no scene wiring is needed.
     ///
     /// Keyboard (primary): arrows move, Up arrow = context jump (climbs when on a ladder,
-    /// aims when combined with X), Z / Space = jump, X = shoot, Esc = pause.
+    /// aims when combined with X), Z / Space = jump, X = shoot, C / Enter = examine, Esc = pause.
+    /// Dialogue advances with Z / Space / X / C / Enter.
     /// Gamepad: stick/D-pad move and climb, South = jump, West = shoot, Start = pause.
     ///
     /// The Up arrow is reported separately (<see cref="UpJumpPressed"/>) so the player controller can
@@ -26,11 +27,16 @@ namespace TileVania
             /// <summary>Up arrow pressed this frame (also set Move.y = 1 to hold it).</summary>
             public bool UpPressed;
             public bool ShootPressed;
+            /// <summary>C / Enter / gamepad North pressed this frame (examine).</summary>
+            public bool InteractPressed;
+            /// <summary>A dialogue-advance key pressed this frame.</summary>
+            public bool AdvancePressed;
+            public bool PausePressed;
         }
 
         public static SimulatedInput Simulated;
 
-        static InputAction move, jump, upKey, shoot, pause;
+        static InputAction move, jump, upKey, shoot, pause, interact, advance;
         static bool initialized;
 
         static void Init()
@@ -61,7 +67,19 @@ namespace TileVania
             pause.AddBinding("<Keyboard>/escape");
             pause.AddBinding("<Gamepad>/start");
 
-            move.Enable(); jump.Enable(); upKey.Enable(); shoot.Enable(); pause.Enable();
+            interact = new InputAction("Interact", InputActionType.Button);
+            interact.AddBinding("<Keyboard>/c");
+            interact.AddBinding("<Keyboard>/enter");
+            interact.AddBinding("<Keyboard>/numpadEnter");
+            interact.AddBinding("<Gamepad>/buttonNorth");
+
+            advance = new InputAction("Advance", InputActionType.Button);
+            foreach (var key in new[] { "z", "space", "x", "c", "enter", "numpadEnter" }) advance.AddBinding("<Keyboard>/" + key);
+            advance.AddBinding("<Gamepad>/buttonSouth");
+            advance.AddBinding("<Gamepad>/buttonEast");
+            advance.AddBinding("<Gamepad>/buttonWest");
+
+            move.Enable(); jump.Enable(); upKey.Enable(); shoot.Enable(); pause.Enable(); interact.Enable(); advance.Enable();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -128,9 +146,31 @@ namespace TileVania
         {
             get
             {
-                if (Simulated.Enabled) return false;
+                if (Simulated.Enabled) { bool v = Simulated.PausePressed; Simulated.PausePressed = false; return v; }
                 Init();
                 return pause.WasPressedThisFrame();
+            }
+        }
+
+        /// <summary>Examine something (C, Enter, gamepad North).</summary>
+        public static bool InteractPressed
+        {
+            get
+            {
+                if (Simulated.Enabled) { bool v = Simulated.InteractPressed; Simulated.InteractPressed = false; return v; }
+                Init();
+                return interact.WasPressedThisFrame();
+            }
+        }
+
+        /// <summary>Advance dialogue (Z, Space, X, C, Enter, or a gamepad face button).</summary>
+        public static bool AdvancePressed
+        {
+            get
+            {
+                if (Simulated.Enabled) { bool v = Simulated.AdvancePressed; Simulated.AdvancePressed = false; return v; }
+                Init();
+                return advance.WasPressedThisFrame();
             }
         }
     }

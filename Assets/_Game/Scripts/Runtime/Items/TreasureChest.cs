@@ -41,6 +41,14 @@ namespace TileVania
             Fx.Burst(transform.position + Vector3.up * 0.6f, new Color(1f, 0.85f, 0.3f), 20, 5f, 0.6f);
             if (glow != null) glow.intensity *= 2f;
 
+            // The Keeper's chest holds the last memory, not gold: the story director takes over.
+            if (isFinalTreasure && StoryDirector.Instance != null)
+            {
+                Opened?.Invoke();
+                StoryDirector.Instance.PlayEnding(this);
+                yield break;
+            }
+
             if (healAmount > 0) player.GetComponent<PlayerHealth>().Heal(healAmount);
             for (int i = 0; i < gemCount && gemPrefab != null; i++)
             {

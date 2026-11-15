@@ -49,6 +49,7 @@ namespace TileVania
         void Play()
         {
             GameSession.StartNewRun();
+            Story.BeginNewCycle(Story.Opening.FirstWaking);
             SceneLoader.Load(SceneLoader.Level1);
         }
 

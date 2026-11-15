@@ -85,7 +85,10 @@ def analyse(path, keys_order):
         pass
     unreached = [p for p, c in g.items() if c in 'g$ch' and not near(cells, p)]
     print("  unreachable pickups/chests:", unreached or 'none')
-    return ok
+    story = sorted((c, p) for p, c in g.items() if c.isdigit())
+    lost = [(c, p) for c, p in story if not near(cells, p)]
+    if story: print("  story markers:", ', '.join(f"{c}@{p}" for c, p in story), '| unreachable:', lost or 'none')
+    return ok and not lost
 
 ok = True
 base = sys.argv[1]

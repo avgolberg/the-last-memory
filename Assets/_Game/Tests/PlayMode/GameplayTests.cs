@@ -19,6 +19,10 @@ namespace TileVania.Tests
         {
             while (SceneLoader.IsLoading) yield return null; // let transitions from a previous test finish
             GameInput.Simulated = new GameInput.SimulatedInput { Enabled = true };
+            // Story dialogue must never get in the way of gameplay: these tests let it advance by itself.
+            DialogueBox.TestAutoAdvance = true;
+            StoryDirector.CutsceneSpeed = 6f;
+            Story.BeginNewCycle(Story.Opening.None);
             SceneManager.LoadScene(scene);
             yield return null;
             yield return null;
@@ -30,6 +34,8 @@ namespace TileVania.Tests
         public void TearDown()
         {
             GameInput.Simulated = default;
+            DialogueBox.TestAutoAdvance = false;
+            StoryDirector.CutsceneSpeed = 1f;
             Time.timeScale = 1f;
         }
 
@@ -277,9 +283,20 @@ namespace TileVania.Tests
             yield return new WaitForSeconds(3.5f);
             var chest = GameObject.Find("Chest_Gold");
             Assert.IsNotNull(chest, "treasure should appear after the boss dies");
-            yield return TeleportAndSettle(chest.transform.position + Vector3.up * 0.1f);
-            yield return new WaitForSeconds(3.5f);
-            Assert.IsNotNull(GameObject.Find("VictoryPanel"), "victory screen after claiming the treasure");
+            int cycles = Story.CompletedCycles;
+            try
+            {
+                yield return TeleportAndSettle(chest.transform.position + Vector3.up * 0.1f);
+                // The chest holds the last memory: the ending plays, then the game loops back to the forest.
+                for (float t = 0; t < 40f && !(SceneManager.GetActiveScene().name == SceneLoader.Level1 && GameMenus.EndingVisible); t += Time.unscaledDeltaTime)
+                    yield return null;
+                Assert.AreEqual(SceneLoader.Level1, SceneManager.GetActiveScene().name, "the ending returns to the forest");
+                Assert.IsNotNull(GameObject.Find("VictoryPanel"), "the ending panel follows the loop");
+            }
+            finally
+            {
+                Story.SetCompletedCycles(cycles); // don't leave an extra notch in the developer's save
+            }
         }
 
         [UnityTest]

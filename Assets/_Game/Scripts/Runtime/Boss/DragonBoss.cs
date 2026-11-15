@@ -5,7 +5,8 @@ using UnityEngine;
 namespace TileVania
 {
     /// <summary>
-    /// Guardian of the Treasure: a dragon with three telegraphed attacks.
+    /// The Keeper: a dragon with three telegraphed attacks. It guards the last memory because the hero once
+    /// made it promise to (Docs/STORY_SPEC.md); it speaks before the fight and after its defeat.
     ///  - Fire Volley: glows and shakes, then fires a fan of fireballs at the player.
     ///  - Dive Slam: marks the floor under the player, then slams down (vulnerable afterwards).
     ///  - Fire Rain: marks several floor columns, then fire falls on them.
@@ -13,7 +14,7 @@ namespace TileVania
     /// </summary>
     public class DragonBoss : MonoBehaviour, IDamageable
     {
-        public string displayName = "Guardian of the Treasure";
+        public string displayName = "The Keeper";
         public int maxHealth = 30;
         public AudioClip bossMusic;
 
@@ -99,12 +100,13 @@ namespace TileVania
 
         IEnumerator FightLoop()
         {
-            // Intro: swoop in and roar
+            // Intro: swoop in, then speak (once per cycle; the world is frozen while it talks)
             yield return MoveTo(new Vector3((arenaLeft + arenaRight) * 0.5f, floorY + 8f), 1.4f);
+            if (Story.TryBegin("boss_intro")) yield return DialogueBox.Run(StoryScript.BossIntro, DialogueMode.Blocking);
+            else DialogueBox.Play(StoryScript.BossRetry, DialogueMode.Bark);
             SetVulnerable(true);
             AudioManager.Play(Sfx.BossWarning);
             CameraController.Shake(0.35f, 0.8f);
-            HUD.ShowMessage("The Guardian awakens!");
             yield return Flash(new Color(1f, 0.5f, 0.3f), 0.8f);
 
             while (fighting && !dead)
@@ -298,7 +300,7 @@ namespace TileVania
             {
                 enraged = true;
                 baseColor = new Color(1f, 0.75f, 0.75f);
-                HUD.ShowMessage("The Guardian is enraged!");
+                HUD.ShowMessage("The Keeper is enraged!");
                 CameraController.Shake(0.3f, 0.5f);
             }
             if (health <= 0) StartCoroutine(Die());
@@ -335,6 +337,9 @@ namespace TileVania
                 if (spriteRenderer) spriteRenderer.color = i % 2 == 0 ? Color.white : new Color(1f, 0.4f, 0.4f);
                 yield return new WaitForSeconds(0.15f);
             }
+            if (spriteRenderer) spriteRenderer.color = new Color(1f, 0.85f, 0.85f);
+            // Its last words (only if it spoke before the fight: beats never play out of order)
+            if (Story.TryBegin("boss_defeat", "boss_intro")) yield return DialogueBox.Run(StoryScript.BossDefeat, DialogueMode.Blocking);
             Vector3 from = transform.position;
             for (float t = 0; t < 1f; t += Time.deltaTime / 1.2f)
             {
@@ -347,7 +352,6 @@ namespace TileVania
                 treasure.gameObject.SetActive(true);
                 Fx.Burst(treasure.transform.position + Vector3.up * 0.6f, new Color(1f, 0.85f, 0.3f), 30, 6f, 0.8f);
                 AudioManager.Play(Sfx.Key);
-                HUD.ShowMessage("The treasure is revealed!");
             }
             gameObject.SetActive(false);
         }

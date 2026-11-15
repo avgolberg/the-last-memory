@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace TileVania
 {
-    /// <summary>Hearts, gem counter, held keys, level title card, message toasts and the boss health bar.</summary>
+    /// <summary>Hearts, gem counter, held keys, level title card, message toasts, the examine prompt and the boss health bar.</summary>
     public class HUD : MonoBehaviour
     {
         static HUD instance;
@@ -21,9 +21,15 @@ namespace TileVania
         public GameObject bossBarRoot;
         public Image bossBarFill;
         public TMP_Text bossNameText;
+        public CanvasGroup promptGroup;
+        public TMP_Text promptText;
+
+        [Tooltip("Toast heights: normal, and while a dialogue box covers the bottom of the screen.")]
+        public float messageY = 110f, messageYWithDialogue = 300f;
 
         PlayerHealth playerHealth;
         Coroutine messageRoutine, titleRoutine;
+        object promptOwner;
 
         void Awake()
         {
@@ -31,6 +37,33 @@ namespace TileVania
             if (titleGroup) titleGroup.alpha = 0f;
             if (messageGroup) messageGroup.alpha = 0f;
             if (bossBarRoot) bossBarRoot.SetActive(false);
+            if (promptGroup) promptGroup.alpha = 0f;
+        }
+
+        void Update()
+        {
+            if (messageGroup == null) return;
+            var rt = (RectTransform)messageGroup.transform;
+            float y = DialogueBox.IsOpen ? messageYWithDialogue : messageY;
+            if (!Mathf.Approximately(rt.anchoredPosition.y, y)) rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
+        }
+
+        public static bool PromptVisible => instance != null && instance.promptGroup != null && instance.promptGroup.alpha > 0.5f;
+
+        /// <summary>Shows "C  Examine" style prompts for the object that owns it.</summary>
+        public static void SetPrompt(object owner, string action)
+        {
+            if (instance == null || instance.promptGroup == null) return;
+            instance.promptOwner = owner;
+            if (instance.promptText) instance.promptText.text = $"<b>C</b>   {action}";
+            instance.promptGroup.alpha = 1f;
+        }
+
+        public static void ClearPrompt(object owner)
+        {
+            if (instance == null || instance.promptGroup == null || instance.promptOwner != owner) return;
+            instance.promptOwner = null;
+            instance.promptGroup.alpha = 0f;
         }
 
         void Start()

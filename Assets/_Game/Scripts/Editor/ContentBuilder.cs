@@ -311,6 +311,17 @@ namespace TileVania.EditorTools
                 var h = go.AddComponent<HeartPickup>(); h.sound = Sfx.Heal; h.sparkleColor = new Color(1f, 0.4f, 0.5f);
                 Save<Transform>(go, "Pickup_Heart");
             }
+            {
+                // Optional memory fragment: a pale, glowing shard (the level builder sets which memory it holds).
+                var go = PickupRoot("MemoryShard", ArtSetup.GetSprite("Items/Gems_CaveTileset.png", "Gem_Blue"), 0.45f);
+                var v = go.transform.Find("Visual");
+                v.localScale = new Vector3(1.25f, 1.25f, 1f);
+                v.GetComponent<SpriteRenderer>().color = new Color(0.88f, 0.84f, 1f);
+                var shard = go.AddComponent<MemoryShard>(); shard.sound = Sfx.Key; shard.sparkleColor = new Color(0.85f, 0.8f, 1f);
+                AddPointLight(Child(go, "Glow"), new Color(0.75f, 0.7f, 1f), 2.8f, 0.9f).gameObject.AddComponent<LightFlicker>();
+                var glint = go.AddComponent<Glint>(); glint.color = new Color(0.9f, 0.85f, 1f); glint.interval = 1.3f;
+                Save<Transform>(go, "MemoryShard");
+            }
 
             var greenGem = LoadPrefab("Gem_Green").GetComponent<Gem>();
             var orangeGem = LoadPrefab("Gem_Orange").GetComponent<Gem>();

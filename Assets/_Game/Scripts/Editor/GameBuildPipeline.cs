@@ -22,19 +22,19 @@ namespace TileVania.EditorTools
             new LevelBuilder.LevelSpec
             {
                 layout = "Level1_Forest", scene = SceneLoader.Level1, title = "The Whispering Forest",
-                subtitle = "Find the way into the ancient ruins", nextScene = SceneLoader.Level2,
+                subtitle = "The Awakening", nextScene = SceneLoader.Level2,
                 music = "Music_PerilousDungeon.mp3",
             },
             new LevelBuilder.LevelSpec
             {
                 layout = "Level2_Castle", scene = SceneLoader.Level2, title = "The Abandoned Castle",
-                subtitle = "Two keys guard the treasure chamber", nextScene = SceneLoader.Boss,
+                subtitle = "The Forgotten Past", nextScene = SceneLoader.Boss,
                 music = "Music_SpookyDungeon.ogg", castle = true,
             },
             new LevelBuilder.LevelSpec
             {
                 layout = "Level3_TreasureChamber", scene = SceneLoader.Boss, title = "The Treasure Chamber",
-                subtitle = "Something ancient stirs...", nextScene = SceneLoader.MainMenu,
+                subtitle = "The Last Memory", nextScene = SceneLoader.MainMenu,
                 music = "Music_SpookyDungeon.ogg", castle = true, boss = true,
             },
         };
@@ -232,7 +232,22 @@ namespace TileVania.EditorTools
                     bool nextOk = EditorBuildSettings.scenes.Any(b => Path.GetFileNameWithoutExtension(b.path) == lm.nextScene);
                     if (!nextOk) { sb.AppendLine($"  nextScene '{lm.nextScene}' not in build settings"); problems++; }
                     if (lm.player == null || lm.music == null) { sb.AppendLine("  LevelManager missing player or music"); problems++; }
+                    if (Object.FindFirstObjectByType<StoryDirector>() == null) { sb.AppendLine("  no StoryDirector"); problems++; }
                 }
+
+                // Story points: every beat must exist and appear only once per scene.
+                var storyIds = new HashSet<string>();
+                foreach (var sp in Object.FindObjectsByType<StoryPoint>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (StoryScript.Beat(sp.beatId) == null) { sb.AppendLine($"  unknown story beat '{sp.beatId}'"); problems++; }
+                    if (!storyIds.Add(sp.beatId)) { sb.AppendLine($"  duplicate story beat '{sp.beatId}'"); problems++; }
+                }
+                foreach (var ms in Object.FindObjectsByType<MemoryShard>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (StoryScript.Beat(ms.memoryId) == null) { sb.AppendLine($"  unknown memory '{ms.memoryId}'"); problems++; }
+                    if (!storyIds.Add(ms.memoryId)) { sb.AppendLine($"  duplicate memory '{ms.memoryId}'"); problems++; }
+                }
+                if (storyIds.Count > 0) sb.AppendLine($"  story points: {string.Join(", ", storyIds.OrderBy(i => i))}");
             }
             sb.Insert(0, $"Validation: {problems} problem(s)\n");
             File.WriteAllText("Temp/tilevania_validation.txt", sb.ToString());
@@ -256,7 +271,50 @@ namespace TileVania.EditorTools
                 var boss = Object.FindFirstObjectByType<DragonBoss>(FindObjectsInactive.Include);
                 boss.transform.position = new Vector3(28f, 12f, 0f);
             });
-            Capture(SceneLoader.Boss, "_victory", new[] { new Vector2(26, 10) }, () => ShowOnly("VictoryPanel"));
+            Capture(SceneLoader.Boss, "_ending", new[] { new Vector2(26, 10) }, () =>
+            {
+                ShowOnly("VictoryPanel");
+                Object.FindFirstObjectByType<GameMenus>(FindObjectsInactive.Include).victoryStats.text =
+                    "Gems gathered: 64\nMemories glimpsed: 3 of 4\nTime: 14:32    Deaths: 5\nNotches on the tree: 8";
+            });
+
+            // Story scenery and the dialogue box (the scene is not saved)
+            Capture(SceneLoader.Level1, "_story", new[] { new Vector2(10, 11) }, () =>
+            {
+                ShowHud();
+                ShowDialogue("Note", "This time, don't open the chest.", new Color(1f, 0.88f, 0.66f), true);
+            });
+            Capture(SceneLoader.Level1, "_lantern", new[] { new Vector2(76, 13) }, () =>
+            {
+                ShowHud();
+                Object.FindFirstObjectByType<HUD>().promptGroup.alpha = 1f;
+            });
+            Capture(SceneLoader.Level2, "_story", new[] { new Vector2(62, 8), new Vector2(122, 7) }, () =>
+            {
+                ShowHud();
+                ShowDialogue("Faint Ghost", "You always rush past us, as if someone is waiting for you.", new Color(0.95f, 0.92f, 0.85f), false);
+            });
+            Capture(SceneLoader.Boss, "_story", new[] { new Vector2(20, 7) }, () =>
+            {
+                ShowHud();
+                Find("BossBar").SetActive(true);
+                var boss = Object.FindFirstObjectByType<DragonBoss>(FindObjectsInactive.Include);
+                boss.transform.position = new Vector3(24f, 9f, 0f);
+                ShowDialogue("Dragon", "Because you never remember the answer.", new Color(0.95f, 0.92f, 0.85f), false);
+                var overlay = Object.FindFirstObjectByType<CinematicOverlay>(FindObjectsInactive.Include);
+                overlay.letterboxTop.sizeDelta = new Vector2(0f, overlay.letterboxHeight);
+                overlay.letterboxBottom.sizeDelta = new Vector2(0f, overlay.letterboxHeight);
+            });
+        }
+
+        static void ShowDialogue(string speaker, string text, Color color, bool italic)
+        {
+            var box = Object.FindFirstObjectByType<DialogueBox>(FindObjectsInactive.Include);
+            box.group.alpha = 1f;
+            box.speakerText.text = speaker;
+            box.bodyText.text = text;
+            box.bodyText.color = color;
+            box.bodyText.fontStyle = italic ? TMPro.FontStyles.Italic : TMPro.FontStyles.Normal;
         }
 
         static GameObject Find(string name) =>

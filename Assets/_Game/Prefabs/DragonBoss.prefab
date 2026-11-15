@@ -136,7 +136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03d45d65426d8c849b8c9ab6dd2d39aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TileVania.Runtime::TileVania.DragonBoss
-  displayName: Guardian of the Treasure
+  displayName: The Keeper
   maxHealth: 30
   bossMusic: {fileID: 8300000, guid: def6df96cad83c449af7417ed51102c1, type: 3}
   visual: {fileID: 6298398255053358075}

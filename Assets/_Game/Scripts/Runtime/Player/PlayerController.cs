@@ -65,6 +65,9 @@ namespace TileVania
         public bool ControlEnabled { get; private set; } = true;
         public Rigidbody2D Body => rb;
 
+        /// <summary>Cutscenes walk the hero with this (-1..1) while player control is off.</summary>
+        public float ScriptedMoveX { get; set; }
+
         void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
@@ -76,6 +79,7 @@ namespace TileVania
         public void SetControl(bool enabled)
         {
             ControlEnabled = enabled;
+            ScriptedMoveX = 0f;
             if (!enabled)
             {
                 input = Vector2.zero;
@@ -121,8 +125,9 @@ namespace TileVania
             }
             else
             {
-                input = Vector2.zero;
+                input = new Vector2(ScriptedMoveX, 0f);
                 jumpHeld = false;
+                if (Mathf.Abs(ScriptedMoveX) > 0.01f) SetFacing((int)Mathf.Sign(ScriptedMoveX));
             }
 
             UpdateVisual(dt);

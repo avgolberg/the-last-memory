@@ -20,6 +20,9 @@ namespace TileVania.Tests
         {
             while (SceneLoader.IsLoading) yield return null;
             GameInput.Simulated = new GameInput.SimulatedInput { Enabled = true };
+            DialogueBox.TestAutoAdvance = true;
+            StoryDirector.CutsceneSpeed = 6f;
+            Story.BeginNewCycle(Story.Opening.None);
             SceneManager.LoadScene(scene);
             yield return null;
             yield return null;
@@ -31,6 +34,8 @@ namespace TileVania.Tests
         public void TearDown()
         {
             GameInput.Simulated = default;
+            DialogueBox.TestAutoAdvance = false;
+            StoryDirector.CutsceneSpeed = 1f;
             Time.timeScale = 1f;
         }
 
@@ -254,7 +259,8 @@ namespace TileVania.Tests
             var level = GameObject.Find("Level").transform;
             foreach (Transform group in level)
             {
-                if (group.name == "Decor" || group.name == "Lights" || group.name == "Boss") continue;
+                // Backdrop groups: decor, torches, the boss, and story scenery (the notched tree, the scratched wall).
+                if (group.name == "Decor" || group.name == "Lights" || group.name == "Boss" || group.name == "StoryScenery") continue;
                 foreach (Transform obj in group)
                 {
                     foreach (var sr in obj.GetComponentsInChildren<SpriteRenderer>())

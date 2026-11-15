@@ -38,6 +38,8 @@ COLORS = {'#': (110, 80, 60), '=': (190, 140, 70), 'I': (220, 170, 60), 'H': (23
           'p': (255, 255, 0), 't': (255, 100, 0), 'w': (80, 80, 160), ',': (60, 150, 60), '*': (220, 60, 60),
           '|': (150, 150, 150), 'A': (120, 120, 140), 'B': (255, 0, 255), 'T': (255, 215, 0), 'X': (255, 0, 128),
           'Z': (90, 90, 90), '.': (25, 25, 40)}
+# story markers (digits 1-9; meaning per level in StoryScript.BeatForDigit) are drawn bright white
+COLORS.update({str(d): (255, 255, 255) for d in range(1, 10)})
 
 
 def preview(m, path, scale=6):
@@ -113,6 +115,11 @@ def level1():
     m.put(118, 2, '$')
     m.put(121, 2, 'E')
     m.put(124, 2, 'g')
+    # story: 1 notched tree + note, 2 rusted lantern (examine), 3/4 memory shards
+    m.put(6, 8, '1')
+    m.put(74, 10, '2')
+    m.put(58, 13, '3')
+    m.put(116, 13, '4')
     # surface above the cave
     for x in (84, 85, 86, 92, 93, 108, 109, 110): m.put(x, 10, 'g')
     m.row(88, 91, 12, '='); m.put(89, 13, 'g'); m.put(90, 13, 'g')
@@ -188,6 +195,12 @@ def level2():
     m.put(132, 3, 'E')
     m.put(130, 6, 't'); m.put(136, 6, 't')
     for x in (129, 130, 135, 136): m.put(x, 3, 'g')
+    # story: 1 deja vu thought, 2 faint ghost, 3 "I was so close" by the treasure door, 4/5 memory shards
+    m.put(13, 3, '1')
+    m.put(60, 3, '2')
+    m.put(123, 3, '3')
+    m.put(64, 20, '4')
+    m.put(137, 3, '5')
     return m
 
 
