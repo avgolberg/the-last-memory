@@ -66,7 +66,7 @@ namespace TileVania.EditorTools
             physics.ApplyModifiedPropertiesWithoutUndo();
             Layers.ApplyCollisionMatrix();
 
-            PlayerSettings.productName = "TileVania - Treasure Hunt";
+            PlayerSettings.productName = GameInfo.Title;
             AssetDatabase.SaveAssets();
         }
 

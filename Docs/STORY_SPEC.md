@@ -1,6 +1,6 @@
 # Story Specification: *The Last Memory*
 
-This is the narrative for **TileVania — Treasure Hunt**. It is inspired by the torment of Tantalus: something you want badly stays within reach, and you can never hold it. The myth itself is not retold. The game keeps its psychological core: **the hero cannot stop reaching for the memory, and cannot bear to hold it.**
+This is the narrative for **The Last Memory**. It is inspired by the torment of Tantalus: something you want badly stays within reach, and you can never hold it. The myth itself is not retold. The game keeps its psychological core: **the hero cannot stop reaching for the memory, and cannot bear to hold it.**
 
 ---
 

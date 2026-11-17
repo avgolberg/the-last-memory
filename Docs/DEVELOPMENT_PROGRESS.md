@@ -66,7 +66,7 @@ The full narrative is in **`STORY_SPEC.md`**. The hero wakes in the forest with 
 | Combat fixes from the audit | Dedicated projectile layers; projectiles can't touch the player, pickups or exits; spawn-in-wall guard; layer matrix enforced in code and project settings; no tag- or trigger-exit-based logic |
 | Items and progression | Gems, hearts, gold and treasure keys, gates and doors, iron/silver/gold chests, checkpoints, animated portals, explicit scene flow (no looping) |
 | Levels | Forest + underground (128×30), Castle (140×34), Treasure Chamber (40×22), built from ASCII layouts with auto-tiling, back-walls, decor, lights and parallax |
-| Boss | Dragon "Guardian of the Treasure": 3 telegraphed attacks, enrage phase, health bar, hit and defeat effects, treasure reveal, full reset on retry |
+| Boss | The dragon (later named "The Keeper"): 3 telegraphed attacks, enrage phase, health bar, hit and defeat effects, treasure reveal, full reset on retry |
 | UI | Main menu (Play/Settings/Credits/Quit), HUD, pause, death and victory panels, boss bar, level title cards, toasts, fades |
 | Audio | Cross-fading music per area, 24 mapped SFX, independent saved Music/SFX volume |
 | Tooling | Batch-capable builder (`Tools → TileVania → …`), scene validator, screenshot capture, Windows player build, Python level generator and reachability checker (`Tools/LevelTools`) |
@@ -101,7 +101,7 @@ The full narrative is in **`STORY_SPEC.md`**. The hero wakes in the forest with 
 ## Decisions for your review
 
 - **Boss as a dedicated scene** (`Level3_TreasureChamber`). This makes respawn and reset logic simpler and keeps Level 2 smaller.
-- **Glax's dragon is the Guardian.** It is the only creature in the approved packs large enough for a boss.
+- **Glax's dragon is the boss.** It is the only creature in the approved packs large enough for a boss.
 - **Level geometry comes from ASCII layouts plus an editor builder**, not hand-painted tilemaps. This made the levels verifiable, reproducible and testable from the CLI. The scenes are normal Unity scenes and can still be edited afterwards.
 - **A custom camera script replaced Cinemachine** for exact bounds clamping, pixel snapping and screen shake with no extra wiring.
 - **Legacy content moved** (`git mv`, GUIDs preserved) to `Assets/_Legacy`. The original scenes are still there; the crash-recovery scenes in `Assets/_Recovery` are untouched.

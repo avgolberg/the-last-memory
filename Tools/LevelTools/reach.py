@@ -1,4 +1,4 @@
-"""Conservative reachability check for TileVania ASCII layouts.
+"""Conservative reachability check for the ASCII level layouts of The Last Memory.
 Player: 2 cells tall, jump <= 3 up / 4 across (actual: ~3.5 up, ~5 across)."""
 import sys
 from collections import deque

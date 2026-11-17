@@ -69,14 +69,17 @@ namespace TileVania.EditorTools
             }
         }
 
-        /// <summary>Builds a Windows player into Builds/Windows (git-ignored) to verify the game builds.</summary>
+        /// <summary>Where the Windows player is built (the Builds folder is git-ignored).</summary>
+        public const string WindowsBuildPath = "Builds/" + GameInfo.BuildName + "_Windows/" + GameInfo.Title + ".exe";
+
+        /// <summary>Builds the Windows player to verify the game builds.</summary>
         [MenuItem("Tools/TileVania/Build Windows Player")]
         public static void BuildWindowsPlayer()
         {
             var options = new BuildPlayerOptions
             {
                 scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
-                locationPathName = "Builds/Windows/TileVania.exe",
+                locationPathName = WindowsBuildPath,
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.None,
             };

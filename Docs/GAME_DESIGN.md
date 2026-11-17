@@ -1,4 +1,4 @@
-# TileVania — Treasure Hunt: Game Design (as implemented)
+# The Last Memory: Game Design (as implemented)
 
 A short 2D pixel-art action-platformer with a story, **The Last Memory**. A hero wakes in a forest with no memory, crosses ancient ruins and an abandoned castle, and defeats the dragon that guards a chest. The chest holds the one memory they need. It slips away just as they reach it, and they wake in the forest again. The full story and every line of dialogue are in **`STORY_SPEC.md`**.
 

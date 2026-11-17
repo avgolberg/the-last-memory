@@ -42,8 +42,10 @@ namespace TileVania
             if (glow != null) glow.intensity *= 2f;
 
             // The Keeper's chest holds the last memory, not gold: the story director takes over.
-            if (isFinalTreasure && StoryDirector.Instance != null)
+            // (Every level scene has a StoryDirector; the scene validator checks this.)
+            if (isFinalTreasure)
             {
+                if (StoryDirector.Instance == null) { Debug.LogError("The final chest needs a StoryDirector in the scene.", this); yield break; }
                 Opened?.Invoke();
                 StoryDirector.Instance.PlayEnding(this);
                 yield break;
@@ -56,13 +58,7 @@ namespace TileVania
                 g.magnetToPlayer = true;
                 yield return new WaitForSeconds(0.06f);
             }
-            if (isFinalTreasure)
-            {
-                HUD.ShowMessage("The Guardian's treasure is yours!");
-                yield return new WaitForSeconds(1.5f);
-            }
             Opened?.Invoke();
-            if (isFinalTreasure && LevelManager.Instance != null) LevelManager.Instance.Victory();
         }
     }
 }

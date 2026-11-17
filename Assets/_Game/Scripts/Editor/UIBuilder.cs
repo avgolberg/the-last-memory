@@ -223,7 +223,7 @@ namespace TileVania.EditorTools
 
             var boss = Rect(hudRoot, "BossBar", new Vector2(0.5f, 1f), new Vector2(0, -40), new Vector2(900, 90));
             hud.bossBarRoot = boss.gameObject;
-            hud.bossNameText = Label(boss.gameObject, "Name", "Guardian of the Treasure", 34, Gold, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900, 44), title: true);
+            hud.bossNameText = Label(boss.gameObject, "Name", "The Keeper", 34, Gold, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900, 44), title: true);
             Img(Rect(boss.gameObject, "Back", new Vector2(0.5f, 0f), new Vector2(0, 6), new Vector2(880, 34)), UISprite, new Color(0.05f, 0.02f, 0.05f, 0.9f), true);
             var fill = Img(Rect(boss.gameObject, "Fill", new Vector2(0.5f, 0f), new Vector2(0, 12), new Vector2(868, 22)), Pixel, new Color(0.85f, 0.18f, 0.18f));
             fill.type = Image.Type.Filled; fill.fillMethod = Image.FillMethod.Horizontal; fill.fillAmount = 1f;
@@ -326,10 +326,9 @@ namespace TileVania.EditorTools
         public static void BuildMainMenuCanvas(MainMenuController controller)
         {
             var canvas = Canvas("MenuCanvas", 10);
-            Label(canvas, "Title", "TileVania", 150, Gold, new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(1400, 180), title: true);
-            Label(canvas, "Subtitle", "Treasure Hunt", 56, Text, new Vector2(0.5f, 1f), new Vector2(0, -260), new Vector2(1200, 80), title: true);
-            var tagline = Label(canvas, "Tagline", "Every gem is something you have forgotten.", 34, new Color(0.8f, 0.8f, 0.95f),
-                new Vector2(0.5f, 1f), new Vector2(0, -345), new Vector2(1400, 56), title: true);
+            Label(canvas, "Title", GameInfo.Title, 132, Gold, new Vector2(0.5f, 1f), new Vector2(0, -100), new Vector2(1600, 170), title: true);
+            var tagline = Label(canvas, "Tagline", GameInfo.Tagline, 38, new Color(0.8f, 0.8f, 0.95f),
+                new Vector2(0.5f, 1f), new Vector2(0, -280), new Vector2(1400, 60), title: true);
             tagline.fontStyle = FontStyles.Italic;
 
             var main = Rect(canvas, "MainPanel", new Vector2(0.5f, 0.5f), new Vector2(0, -120), new Vector2(420, 360));
@@ -354,6 +353,8 @@ namespace TileVania.EditorTools
             ((RectTransform)credits.transform.parent).sizeDelta = new Vector2(1100, 820);
             ((RectTransform)credits.transform).sizeDelta = new Vector2(1040, 620);
             var text = Label(credits, "Text",
+                $"<b>{GameInfo.Title}</b> - a student project made with Unity and C#\n" +
+                "<b>Story, design, code, and the tree, note, lantern, cottage and Lia sprites</b> - made for this project\n\n" +
                 "<b>Hero</b> - Adventurer Hero by STAEL\n" +
                 "<b>Forest, ruins, dragon</b> - Pixel Art Platformer Asset Pack by Glax (CC0)\n" +
                 "<b>Castle</b> - Spooky Castle Tileset (OpenGameArt)\n" +
@@ -363,8 +364,7 @@ namespace TileVania.EditorTools
                 "<b>Chests</b> - Animated Pixel Art Treasure Chests by Yevhen Babiichuk (DustDFG), CC-BY 4.0\n" +
                 "<b>Portals</b> - Portals (OpenGameArt)\n" +
                 "<b>Music</b> - \"8-bit Perilous Dungeon\" & \"8-bit Slay the Evil\" by HydroGene, \"Spooky Dungeon\" by Memoraphile\n" +
-                "<b>Sound effects</b> - Kenney Impact & Interface Sounds (CC0)\n" +
-                "<b>Story, old tree, note and lantern</b> - made for this project\n\n" +
+                "<b>Sound effects</b> - Kenney Impact & Interface Sounds (CC0)\n\n" +
                 "Full details: Docs/ASSET_CREDITS.md",
                 26, Text, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000, 520), TextAlignmentOptions.TopLeft);
             text.gameObject.AddComponent<LayoutElement>().preferredHeight = 520;

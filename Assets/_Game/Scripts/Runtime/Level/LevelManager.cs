@@ -72,15 +72,6 @@ namespace TileVania
 
         public void CompleteLevel() => SceneLoader.Load(nextScene);
 
-        /// <summary>Fallback ending for a scene without a StoryDirector: show the ending panel directly.</summary>
-        public void Victory()
-        {
-            GameSession.Instance.TimerRunning = false;
-            AudioManager.Play(Sfx.Victory);
-            if (player != null) player.SetControl(false);
-            GameMenus.ShowEnding(Story.CaptureSummary());
-        }
-
         /// <summary>Ending panel → "Begin Again": the new cycle simply continues from the forest.</summary>
         public void BeginAgain()
         {
