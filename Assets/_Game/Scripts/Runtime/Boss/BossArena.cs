@@ -31,7 +31,7 @@ namespace LastMemory
         void OnTriggerEnter2D(Collider2D other)
         {
             if (triggered || boss == null || boss.IsDead) return;
-            var pc = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var pc = PlayerController.FromCollider(other);
             if (pc == null) return;
             triggered = true;
             SetDoor(true, false);

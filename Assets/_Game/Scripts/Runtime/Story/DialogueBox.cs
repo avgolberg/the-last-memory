@@ -111,21 +111,28 @@ namespace LastMemory
 
         void Enqueue(Request r)
         {
-            if (current != null)
+            // Nothing on screen: show it now.
+            if (current == null)
             {
-                if (r.mode == DialogueMode.Bark) { r.onDone?.Invoke(); return; }
-                if (current.mode == DialogueMode.Bark)
-                {
-                    StopCoroutine(running);
-                    Finish(current);
-                }
-                else
-                {
-                    queue.Enqueue(r);
-                    return;
-                }
+                StartRequest(r);
+                return;
             }
-            StartRequest(r);
+            // Something is already showing, so a new bark (a passing thought) is simply skipped.
+            if (r.mode == DialogueMode.Bark)
+            {
+                r.onDone?.Invoke();
+                return;
+            }
+            // A conversation interrupts a bark...
+            if (current.mode == DialogueMode.Bark)
+            {
+                StopCoroutine(running);
+                Finish(current);
+                StartRequest(r);
+                return;
+            }
+            // ...but waits for another conversation to finish.
+            queue.Enqueue(r);
         }
 
         void StartRequest(Request r)

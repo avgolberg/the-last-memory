@@ -43,6 +43,7 @@ namespace LastMemory
             if (Hearts <= 0) { Die(); return true; }
 
             AudioManager.Play(Sfx.PlayerHurt);
+            // Knock the hero away from whatever hit them (backwards if it was directly above or below).
             float dir = Mathf.Sign(transform.position.x - info.source.x);
             if (Mathf.Abs(transform.position.x - info.source.x) < 0.05f) dir = -controller.Facing;
             controller.Knockback(new Vector2(dir * knockback.x, knockback.y), 0.25f);
@@ -128,6 +129,7 @@ namespace LastMemory
             if (invulnerable > 0f)
             {
                 invulnerable -= Time.deltaTime;
+                // Blink while invulnerable: hidden for 0.05 s of every 0.12 s, always visible once it ends.
                 if (spriteRenderer != null) spriteRenderer.enabled = invulnerable <= 0f || Mathf.Repeat(invulnerable, 0.12f) > 0.05f;
             }
         }

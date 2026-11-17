@@ -28,20 +28,37 @@ namespace LastMemory
             if (pc != null) player = pc.transform;
         }
 
+        /// <summary>Where the bolt starts.</summary>
+        Vector2 Muzzle => (Vector2)transform.position + muzzleOffset;
+
+        /// <summary>Where the bolt is aimed: the middle of the hero's body.</summary>
+        Vector2 AimPoint => (Vector2)player.position + Vector2.up * 0.8f;
+
         void Update()
         {
             if (player == null) return;
-            Vector2 muzzle = (Vector2)transform.position + muzzleOffset;
-            Vector2 target = (Vector2)player.position + Vector2.up * 0.8f;
-            if (spriteRenderer != null)
-                spriteRenderer.flipX = spriteFacesRight ? target.x < muzzle.x : target.x > muzzle.x;
+            Vector2 muzzle = Muzzle;
+            Vector2 target = AimPoint;
+            FaceTowards(target.x);
 
             timer -= Time.deltaTime;
             if (timer > 0f) return;
+
+            // Only shoot when the hero is in range and nothing solid is in the way.
             if (Vector2.Distance(muzzle, target) > range) return;
-            if (Physics2D.Linecast(muzzle, target, Layers.SolidMask)) return;
+            bool wallInTheWay = Physics2D.Linecast(muzzle, target, Layers.SolidMask);
+            if (wallInTheWay) return;
+
             timer = cooldown;
             StartCoroutine(Fire());
+        }
+
+        void FaceTowards(float x)
+        {
+            if (spriteRenderer == null) return;
+            // The sprite is drawn facing one way; flipX turns it around.
+            if (spriteFacesRight) spriteRenderer.flipX = x < Muzzle.x;
+            else spriteRenderer.flipX = x > Muzzle.x;
         }
 
         IEnumerator Fire()
@@ -55,10 +72,9 @@ namespace LastMemory
             }
             if (spriteRenderer != null) spriteRenderer.color = Color.white;
             if (player == null || projectilePrefab == null) yield break;
-            Vector2 muzzle = (Vector2)transform.position + muzzleOffset;
-            Vector2 target = (Vector2)player.position + Vector2.up * 0.8f;
-            var p = Instantiate(projectilePrefab, muzzle, Quaternion.identity);
-            p.Launch(target - muzzle);
+            // Aim at where the hero is now, after the warning.
+            var bolt = Instantiate(projectilePrefab, Muzzle, Quaternion.identity);
+            bolt.Launch(AimPoint - Muzzle);
         }
     }
 }

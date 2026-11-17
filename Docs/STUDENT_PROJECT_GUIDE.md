@@ -203,12 +203,180 @@ Editor scripts (`Assets/_Game/Scripts/Editor/`, namespace `LastMemory.EditorTool
 `LevelBuilder` (scenes from layouts), `MemoryStageBuilder` (the flashback set),
 `GameBuildPipeline` (menu commands: rebuild, validate, screenshots, Windows build).
 
+## Understanding the C# Code
+
+This section explains how the main gameplay systems work in the real code. Two Unity ideas come up
+everywhere:
+
+- **Unity calls methods for you** at fixed moments: `Awake` (object created), `Start` (before its first frame),
+  `Update` (every frame), `FixedUpdate` (every physics step, 50 times a second), `LateUpdate` (after all
+  `Update`s), and `OnTriggerEnter2D` / `OnTriggerStay2D` (a trigger collider touches another collider).
+- **Coroutines** (`IEnumerator` methods with `yield return`) are used for anything that happens over time: fades,
+  boss attacks, cutscenes. `yield return null` waits one frame; `yield return new WaitForSeconds(0.5f)` waits
+  half a second. They are started with `StartCoroutine(...)`.
+
+### A complete example: the player presses X
+
+1. **Input.** `GameInput` (a static class) creates an Input System `InputAction` called "Shoot", bound to
+   `<Keyboard>/x` and the gamepad's west button. Nothing is set up in the Inspector; it is all in code.
+2. **Reading it.** Every frame, `PlayerController.Update` calls `ReadActions()`, which checks
+   `GameInput.ShootPressed` (true only on the frame the key goes down, via `WasPressedThisFrame()`).
+   If the Up arrow is held at that moment, the shot aims up (C does the same through `GameInput.ShootUpPressed`).
+3. **Creating the projectile.** `TryShoot(aimUp)` checks the 0.3 s cooldown, picks a direction and a spawn point,
+   and uses `Physics2D.Linecast` to make sure the spawn point isn't inside a wall. Then
+   `Instantiate(projectilePrefab, ...)` copies the `PlayerProjectile` prefab and `projectile.Launch(direction)`
+   sets its `Rigidbody2D.linearVelocity`. `Launch` also calls `Destroy(gameObject, lifetime)`, so a shot that hits
+   nothing disappears after its lifetime (0.9 s for the hero's slash, about 14 tiles).
+4. **Collision.** The projectile has a trigger `CircleCollider2D` and sits on the *PlayerProjectile* physics layer.
+   The collision matrix (`Layers.CollidingPairs`) lets that layer touch only *Ground* and *Enemy*, so shots pass
+   through pickups and portals. When it touches something, Unity calls `Projectile.OnTriggerEnter2D(other)`.
+5. **Damage.** If `other` is a wall, the projectile just bursts. Otherwise it looks for an `IDamageable` on the
+   object (`other.GetComponentInParent<IDamageable>()`) and calls `TakeDamage(new DamageInfo(damage, position))`.
+   The projectile doesn't know whether it hit a slime or the dragon; it only knows the interface.
+6. **The enemy reacts.** `EnemyHealth.TakeDamage` subtracts health. If some is left, it plays a sound and starts a
+   short red-flash coroutine; if not, `Die()` spawns particles, raises the `Died` event and destroys the enemy.
+   `TakeDamage` returns `true`, so the projectile destroys itself too (`Impact()`).
+
+### Input: `GameInput` (Core)
+
+- **Does:** defines every control in code and offers simple read-only properties: `Move`, `JumpPressed`,
+  `JumpHeld`, `UpJumpPressed`, `ShootPressed`, `ShootUpPressed`, `InteractPressed`, `AdvancePressed`, `PausePressed`.
+- **Unity:** Input System `InputAction`s with keyboard and gamepad bindings.
+- **Talks to others:** other scripts read its static properties. Tests fill in `GameInput.Simulated` instead of
+  pressing real keys, which is how the automated tests "play" the game.
+- **C# concepts:** `static class`, properties with `get`, a `struct` for the simulated input.
+
+### Player movement, jumping and ladders: `PlayerController` (Player)
+
+- **Unity:** `Rigidbody2D` (moved by setting its velocity), `CapsuleCollider2D`, an `Animator` on the child
+  `Visual` object, `Physics2D.OverlapBox` / `OverlapPoint` for ground and ladder checks.
+- **Main methods:**
+  - `Update`: reads input (`ReadActions`), handles ladders (`UpdateLadder`), and updates the sprite (`UpdateVisual`).
+  - `FixedUpdate`: the physics. It checks for ground (`CheckGround`), runs with acceleration
+    (`Mathf.MoveTowards` on the velocity), starts jumps, applies stronger gravity when falling, and moves the hero
+    up and down while climbing.
+  - `ReadActions`: decides what the Up arrow means (climb on a ladder, otherwise jump after a 0.09 s wait so
+    Up + X can aim instead).
+  - `UpdateLadder`, `StartClimbing`, `StopClimbing`: grabbing a ladder turns gravity off and snaps the hero to the
+    ladder's centre; leaving it turns gravity back on.
+- **Why input and physics are split:** key presses are only reliable in `Update` (every frame), while velocity
+  should be changed in `FixedUpdate` (every physics step). `ReadActions` stores *when* a jump was pressed
+  (`lastJumpPressedTime`), and `FixedUpdate` uses it. That stored time is also what makes the jump buffer and
+  coyote time work.
+- **Talks to others:** `PlayerHealth` calls `Knockback` and `SetControl`; cutscenes use `SetControl(false)`,
+  `SetFacing` and `ScriptedMoveX`. Triggers recognise the hero with `PlayerController.FromCollider(other)`.
+
+### Health, damage and "lives": `PlayerHealth`, `IDamageable`, `ContactDamage`, `KillZone`
+
+- The hero has **3 hearts** instead of lives. Losing all of them shows the death panel; *Retry* restores the hearts
+  at the last checkpoint (`LevelManager.Retry` → `PlayerHealth.Revive`).
+- `IDamageable` (in `Damage.cs`) is an **interface** with one method, `bool TakeDamage(DamageInfo info)`.
+  `PlayerHealth`, `EnemyHealth` and `DragonBoss` all implement it. `DamageInfo` is a small `struct` (amount and
+  where the hit came from, used for the knockback direction).
+- `ContactDamage` is placed on spikes, enemy bodies and the boss. In `OnTriggerStay2D` it hurts the player.
+  `PlayerHealth` ignores hits during the 1.2 s of invulnerability after a hit, so touching spikes costs exactly one
+  heart.
+- `KillZone` is a wide trigger under each level. Falling into it calls `PlayerHealth.FellIntoPit()`.
+- **Events:** `PlayerHealth` raises `HeartsChanged`; the `HUD` subscribes to it (`+=`) and redraws the hearts.
+  Neither script needs to know how the other works.
+
+### Shooting and projectiles: `Projectile` (Combat)
+
+- One script for every projectile: the hero's slash, the ghost's bolt, the boss's fireballs and shockwaves. Prefabs
+  differ only in their settings (speed, damage, sprite) and **physics layer**, which decides what they can hit.
+- `Launch(direction)` sets the velocity and lifetime; `OnTriggerEnter2D` handles walls and `IDamageable` targets.
+
+### Enemies (Enemies)
+
+| Script | Unity parts | How it works |
+|---|---|---|
+| `EnemyHealth` | `SpriteRenderer` | Implements `IDamageable`: health, hit flash (coroutine), death (particles, `Died` event, `Destroy`). |
+| `PatrolEnemy` (skeleton) | kinematic `Rigidbody2D`, `Physics2D.Raycast` | In `FixedUpdate`: a raycast forward finds walls, a raycast down in front of the feet finds the floor; it turns around at either, then moves with `MovePosition`. |
+| `ShooterEnemy` (ghost) | `SpriteRenderer`, `Physics2D.Linecast` | In `Update`: faces the hero, counts down a timer, and fires only when the hero is in range and no wall is in between (`Linecast`). `Fire()` is a coroutine: 0.6 s of flashing (the warning), then a `Projectile` aimed at the hero. |
+| `FlyingEnemy` (bat) | `Transform` only | Moves along a formula: `Mathf.PingPong` for left–right, `Mathf.Sin` for the wave. |
+| `HangingThread` + `Bobbing` (spider) | `SpriteRenderer` | `Bobbing` moves the spider up and down; `HangingThread` stretches a 1-pixel sprite from the ceiling to it. |
+
+The slime has no special script: it is `EnemyHealth` + `ContactDamage` + an animation (`SpriteFrameAnimator`).
+
+### Collectibles and keys: `Pickup`, `Gem`, `HeartPickup`, `KeyPickup`, `LockedGate`, `GameSession`
+
+- `Pickup` is an **abstract base class**. It handles what every pickup has in common: detecting the hero in
+  `OnTriggerEnter2D`, collecting only once, the sound and sparkle, `Destroy`, and the "fly to the player" movement
+  of gems that come out of chests. Each subclass only says what collecting does by **overriding**
+  `OnCollected(player)`:
+  - `Gem`: `GameSession.Instance.AddGems(value)`.
+  - `HeartPickup`: also overrides `CanCollect` so it stays in the world when your hearts are full.
+  - `KeyPickup`: `GameSession.Instance.AddKey(key)` and a HUD message.
+- `GameSession` stores gems, keys, deaths and time. It is a **singleton** created on first use and kept alive across
+  scenes with `DontDestroyOnLoad`. It raises a `Changed` event that the `HUD` listens to.
+- `LockedGate`: in `OnTriggerStay2D`, if `GameSession.Instance.HasKey(requiredKey)`, it uses the key and runs the
+  `Open()` coroutine (disables the solid collider, slides and fades the bars); otherwise it shows "Locked".
+
+### The boss: `DragonBoss` and `BossArena` (Boss)
+
+- `BossArena` is a trigger at the hall entrance. `OnTriggerEnter2D` closes the gate behind the hero and calls
+  `boss.StartFight()`. It also subscribes to `LevelManager.PlayerRespawned`, so dying resets the fight.
+- `DragonBoss.StartFight` starts one long coroutine, `FightLoop`: fly in, speak (the blocking dialogue pauses the
+  game), then repeat *pick a random attack (never the same one twice) → run it → hover* until the boss dies.
+  Each attack (`FireVolley`, `DiveSlam`, `FireRain`) is its own coroutine, so you can read an attack from top to
+  bottom like a script: move, warn (`Flash`, red markers), attack, wait.
+- `TakeDamage` (from `IDamageable`) lowers health, updates the HUD bar, switches to the *enraged* mode below half
+  health, and starts `Die()` at zero.
+- **Unity:** kinematic `Rigidbody2D`, one trigger hurtbox, `ContactDamage`, `SpriteRenderer.flipX` for facing,
+  `Instantiate` for fireballs.
+
+### Scene transitions: `SceneLoader`, `LevelManager`, `LevelExit` (Core, Level)
+
+- `SceneLoader.Load("Level2_Castle")` fades a black overlay in, loads the scene with
+  `SceneManager.LoadSceneAsync`, and fades out. It lives on a `DontDestroyOnLoad` object, so the fade survives the
+  scene change, and it ignores a second request while loading.
+- Each level has one `LevelManager` (`LevelManager.Instance`). It starts the music and title card, keeps the active
+  checkpoint, shows the death panel, handles *Retry*, and knows the name of the next scene
+  (`CompleteLevel()` → `SceneLoader.Load(nextScene)`).
+- `LevelExit` (the portal) opens its animation when the hero comes near, and on `OnTriggerEnter2D` shrinks the hero
+  into the portal and calls `LevelManager.Instance.CompleteLevel()`.
+
+### UI and menus: `HUD`, `GameMenus`, `MainMenuController`, `CinematicOverlay` (UI)
+
+- **Unity:** `Canvas` + `CanvasScaler` (scales with the screen), `Image`, TextMesh Pro `TMP_Text`, `CanvasGroup`
+  (fading whole panels with `alpha`), `Button.onClick`, and the `EventSystem` for keyboard navigation.
+- `HUD` subscribes to `PlayerHealth.HeartsChanged` and `GameSession.Changed` and redraws only when something
+  changes. Other scripts call its static methods, e.g. `HUD.ShowMessage("Checkpoint")`.
+- `GameMenus` (pause, death, ending panels) and `MainMenuController` connect buttons in `Awake` with
+  `button.onClick.AddListener(...)`. Pausing sets `Time.timeScale = 0`, which stops physics and every
+  `Time.deltaTime`-based movement.
+
+### Dialogue and story triggers (Story)
+
+- `StoryScript` holds every line as `DialogueLine` arrays, plus a table that maps the digits in the level files to
+  story beats. Changing text never requires touching a scene.
+- `StoryPoint` sits on a trigger in the level. In `OnTriggerStay2D` it asks `Story.TryBegin(beatId, requires)`,
+  which returns true only the first time this cycle (and only if the required earlier beat has happened). Then it
+  calls `DialogueBox.Play(lines, mode)`. Readable objects (the lantern) instead check `GameInput.InteractPressed`
+  in `Update` while the hero stands near them.
+- `DialogueBox` shows one request at a time and queues the rest (`Enqueue`). Its `ShowLine` coroutine types the
+  text letter by letter in real time (`Time.unscaledDeltaTime`), so it still works while a blocking dialogue has
+  frozen the world with `Time.timeScale = 0`. When a request ends, its `onDone` callback (an `Action`) runs, which
+  is how cutscenes wait for a conversation (`yield return DialogueBox.Run(...)`).
+- `StoryDirector` and `MemoryFlashback` are the cutscenes: long coroutines that move the hero, the actors and the
+  camera, fade the screen and play dialogue, one step after another.
+
+### Parts that look complicated on purpose
+
+- **The jump timing in `PlayerController`** (buffer, coyote time, the Up-arrow wait) is what makes the controls feel
+  fair. It's a few timestamps compared in `FixedUpdate`, and the comments name each one.
+- **The editor builder** (`Scripts/Editor`) is large because it creates every scene, prefab and import setting from
+  code. That's what keeps the levels in sync with the `.txt` layouts. You don't need it to explain the gameplay.
+- **`ArtSetup.ExtrudeTiles`** copies each tile with a 1-pixel border so no thin lines appear between tiles when the
+  camera is between two pixel positions.
+- **`Fx`** reuses a pool of particle objects instead of creating new ones for every effect, to avoid stutters.
+
 ## 15. Physics and collisions
 
 - Rigidbody2D physics for the hero, enemies and projectiles. Level geometry uses `TilemapCollider2D` merged into
   a `CompositeCollider2D` (one smooth collider instead of hundreds of boxes, so the hero never snags on tile
   edges). Wooden ledges add a `PlatformEffector2D` (one-way).
-- **Layers** decide who collides with whom (`Layers.cs`; the matrix is set at startup). For example, player
+- **Layers** decide who collides with whom (the `CollidingPairs` table in `Layers.cs`; the matrix is set at startup). For example, player
   projectiles only hit Ground and Enemy, so they can't trigger the exit portal or collect items.
 - Objects are recognised **by component** (`GetComponent<PlayerController>()`), not by tag strings.
 - Ground detection uses a small `OverlapBox` under the feet; skeleton patrols use raycasts.
@@ -271,7 +439,6 @@ tile sheets. Change the layouts or the builder code instead.
 ## 20. How to run and build
 
 - **Open:** Unity Hub → Add → this folder → open with Unity **6000.2.13f1**.
-  (The package list includes the Git-hosted *Hot Reload* tool, so Git must be installed to resolve packages.)
 - **Play in the Editor:** open `Assets/_Game/Scenes/MainMenu.unity` and press Play.
 - **Tests:** Window → General → Test Runner → PlayMode → Run All.
 - **Build:** Tools → The Last Memory → Build Windows Player. The result is

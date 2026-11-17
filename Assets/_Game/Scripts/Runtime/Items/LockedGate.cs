@@ -22,7 +22,7 @@ namespace LastMemory
         void OnTriggerStay2D(Collider2D other)
         {
             if (open) return;
-            var player = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var player = PlayerController.FromCollider(other);
             if (player == null) return;
             var session = GameSession.Instance;
             if (session.HasKey(requiredKey))

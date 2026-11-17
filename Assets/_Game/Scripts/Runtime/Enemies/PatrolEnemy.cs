@@ -29,13 +29,17 @@ namespace LastMemory
         {
             Vector2 pos = rb.position;
             Vector2 ahead = pos + new Vector2(dir * (halfWidth + 0.05f), 0f);
+            // Two raycasts: one forward at knee height finds walls, one down just in front of the feet finds the
+            // floor. Turn around at a wall or at the edge of a ledge.
             bool wall = Physics2D.Raycast(pos + new Vector2(0f, 0.5f), Vector2.right * dir, halfWidth + 0.1f, Layers.SolidMask);
             bool ground = Physics2D.Raycast(ahead + Vector2.up * 0.1f, Vector2.down, 0.4f, Layers.GroundMask);
             if (wall || !ground) dir = -dir;
 
+            // Kinematic body: move it ourselves (physics won't push it).
             rb.MovePosition(pos + new Vector2(dir * speed * Time.fixedDeltaTime, 0f));
             if (visual != null)
             {
+                // Mirror the sprite to face the walking direction.
                 float sx = Mathf.Abs(visual.localScale.x) * (spriteFacesRight ? dir : -dir);
                 visual.localScale = new Vector3(sx, visual.localScale.y, 1f);
             }

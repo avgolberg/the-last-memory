@@ -40,7 +40,7 @@ namespace LastMemory
         void OnTriggerStay2D(Collider2D other)
         {
             if (beat == null || beat.kind == StoryPointKind.Readable || beat.kind == StoryPointKind.MemoryShard) return;
-            var pc = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var pc = PlayerController.FromCollider(other);
             if (pc == null || !CanPlayNow(pc)) return;
             if (!Story.TryBegin(beat.id, beat.requires)) return;
             var mode = beat.kind == StoryPointKind.AutoBark ? DialogueMode.Bark : DialogueMode.Blocking;

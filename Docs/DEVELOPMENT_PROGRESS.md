@@ -2,6 +2,24 @@
 
 **Branch:** `modernization`. **Recovery point:** tag `pre-modernization` on `1921e3d`, the original course project. GitHub: `avgolberg/tilevania` (iterations 1–3 were pushed; iteration 4 is committed locally and **not pushed**). **Unity:** 6000.2.13f1, URP 2D, Input System.
 
+## Iteration 5: code readability and one dependency removed
+
+No gameplay, story, visuals, controls, levels, balance, scenes or prefabs changed.
+
+| Area | What changed |
+|---|---|
+| **Hot Reload removed** | `com.singularitygroup.hotreload` (Git-hosted, a development tool) removed from `Packages/manifest.json` and `packages-lock.json`. No script, asset, setting or define symbol referenced it. Its two dependencies (`com.unity.ugui`, `com.unity.modules.unitywebrequest`) stay because the game lists them itself. |
+| **Readability** | Small, behaviour-preserving edits in `PlayerController`, `ShooterEnemy`, `DragonBoss`, `DialogueBox`, `Layers`, `PlayerHealth`, `PatrolEnemy`, plus a named helper `PlayerController.FromCollider` used by seven trigger scripts. See below. |
+| **Guide** | New section **Understanding the C# Code** in `STUDENT_PROJECT_GUIDE.md`, with a step-by-step walkthrough of a shot from key press to enemy damage. |
+
+Readability changes, in detail:
+- `PlayerController`: nested `?:` expressions replaced by plain `if`/`else` (acceleration rate, ladder grab, animation state, climb-animation pause); shooting picks direction/origin/spawn in one `if (aimUp)` block instead of three ternaries; a redundant variable removed; short comments on jump buffering and coyote time.
+- `PlayerController.FromCollider(other)` replaces `other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null` in `Pickup`, `TreasureChest`, `LockedGate`, `Checkpoint`, `LevelExit`, `BossArena` and `StoryPoint`.
+- `ShooterEnemy`: the muzzle and aim-point formulas, written twice, are now the properties `Muzzle` and `AimPoint`; the range/line-of-sight checks have names.
+- `DragonBoss`: the "which wall to fly to" ternary is an `if`; `FacePlayer` reuses `FaceTowards` instead of repeating it.
+- `DialogueBox.Enqueue`: nested branches flattened into four commented cases.
+- `Layers.ShouldCollide`: a long chain of `||` calls became a readable table, `CollidingPairs`, checked in a loop.
+
 ## Iteration 4: final polish for submission
 
 | Area | What changed |
@@ -129,7 +147,7 @@ The full narrative is in **`STORY_SPEC.md`**. The hero wakes in the forest with 
 6. **The builder overwrites the generated scenes and prefabs.** For hand-edited scenes, either stop using Rebuild or put the changes in the layouts and builder code.
 7. Difficulty is untuned by humans. The boss has 30 HP, and the simulated bot (with healing) beat it in under 30 s. Real players will take longer, but it may still need a tuning pass.
 8. Nice-to-haves not done: save/continue, level select, footstep sounds, gamepad UI testing, a Pixel Perfect Camera, rebindable controls.
-9. The project still has the original packages, including the Git-hosted Hot Reload (opening the project needs Git and network access to resolve it). Cinemachine was removed in iteration 4 with the legacy content.
+9. Cinemachine was removed in iteration 4 with the legacy content, and the Git-hosted Hot Reload package in iteration 5. The project no longer needs Git to open.
 
 ## Decisions for your review
 

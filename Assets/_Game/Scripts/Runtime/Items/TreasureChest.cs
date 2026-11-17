@@ -22,7 +22,7 @@ namespace LastMemory
         void OnTriggerEnter2D(Collider2D other)
         {
             if (opened) return;
-            var player = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var player = PlayerController.FromCollider(other);
             if (player == null) return;
             if (player.GetComponent<PlayerHealth>().IsDead) return;
             opened = true;

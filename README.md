@@ -34,7 +34,7 @@ Input System and TextMesh Pro.
 | Pause | Esc | Start |
 
 ## Running the project
-1. Open the folder in Unity Hub with Unity **6000.2.13f1** (Git must be installed: one package is fetched from Git).
+1. Open the folder in Unity Hub with Unity **6000.2.13f1**.
 2. Open `Assets/_Game/Scenes/MainMenu.unity` and press Play.
 3. Tests: Window → General → Test Runner → PlayMode → Run All.
 4. Windows build: **Tools → The Last Memory → Build Windows Player** → `Builds/TheLastMemory_Windows/The Last Memory.exe`.

@@ -126,8 +126,11 @@ namespace LastMemory
 
         IEnumerator FireVolley()
         {
-            float side = player != null && player.position.x > (arenaLeft + arenaRight) * 0.5f ? arenaLeft + 2.5f : arenaRight - 2.5f;
-            // level with the side platforms so the player can hit it with straight shots
+            // Fly to the wall opposite the hero, level with the side platforms
+            // so the player can hit it with straight shots.
+            float side = arenaRight - 2.5f;
+            bool heroOnRightHalf = player != null && player.position.x > (arenaLeft + arenaRight) * 0.5f;
+            if (heroOnRightHalf) side = arenaLeft + 2.5f;
             yield return MoveTo(new Vector3(side, floorY + 3.2f), 0.9f);
             int volleys = enraged ? 2 : 1;
             for (int v = 0; v < volleys; v++)
@@ -251,9 +254,7 @@ namespace LastMemory
 
         void FacePlayer()
         {
-            if (player == null || spriteRenderer == null) return;
-            bool playerRight = player.position.x > transform.position.x;
-            spriteRenderer.flipX = spriteFacesRight ? !playerRight : playerRight;
+            if (player != null) FaceTowards(player.position.x);
         }
 
         Vector2 Mouth()
