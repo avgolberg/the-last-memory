@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -6,8 +7,9 @@ namespace TileVania.EditorTools
 {
     /// <summary>
     /// Tiny original pixel-art pieces that the approved packs do not provide
-    /// (heart icons, a ladder tile, a 1-pixel sprite, and the story props: the old notched tree, the pinned note,
-    /// and the lantern, lit and rusted). Drawn from code so they are clearly project-made.
+    /// (heart icons, a ladder tile, a 1-pixel sprite, the story props: the old notched tree, the pinned note,
+    /// the lantern, lit and rusted; and for the flashback: Lia, the cottage, the distant castle and a sack of gold).
+    /// Drawn from code so they are clearly project-made.
     /// </summary>
     public static class GeneratedArt
     {
@@ -42,6 +44,14 @@ namespace TileVania.EditorTools
             var px = new Texture2D(4, 4);
             px.SetPixels(new Color[16].Populate(Color.white));
             Write("Pixel.png", px);
+
+            // The flashback: Lia (standing and walking), the cottage, the castle on the horizon and the sack of gold
+            Write("Lia_0.png", FromPattern(LiaPattern(walking: false), LiaColor));
+            Write("Lia_1.png", FromPattern(LiaPattern(walking: true), LiaColor));
+            Write("Cottage.png", CottageTexture());
+            Write("Castle_Silhouette.png", CastleSilhouetteTexture());
+            Write("GoldSack.png", FromPattern(SackPattern, c => c == 'E' ? Hex("2a1a10") : c == 'S' ? Hex("8a6440")
+                : c == 'B' ? Hex("9a7448") : c == 'G' ? Hex("f0c050") : Color.clear));
             AssetDatabase.Refresh();
 
             ArtSetup.Single("Generated/Heart_Full.png", 12, new Vector2(0.5f, 0.5f));
@@ -52,6 +62,158 @@ namespace TileVania.EditorTools
             ArtSetup.Single("Generated/Note.png", 16, new Vector2(0.5f, 0.5f));
             ArtSetup.Single("Generated/Lantern_Lit.png", 16, new Vector2(0.5f, 0.5f));
             ArtSetup.Single("Generated/Lantern_Rusted.png", 16, new Vector2(0.5f, 0.5f));
+            ArtSetup.Single("Generated/Lia_0.png", 16, new Vector2(0.5f, 0f));
+            ArtSetup.Single("Generated/Lia_1.png", 16, new Vector2(0.5f, 0f));
+            ArtSetup.Single("Generated/Cottage.png", 16, new Vector2(0.5f, 0f));
+            ArtSetup.Single("Generated/Castle_Silhouette.png", 16, new Vector2(0.5f, 0f));
+            ArtSetup.Single("Generated/GoldSack.png", 16, new Vector2(0.5f, 0.5f));
+        }
+
+        // ------------------------------------------------------------------ flashback art
+
+        /// <summary>
+        /// Lia, the hero's little sister: the same chunky style as the hero (blank face, big hair), about two thirds
+        /// of the hero's height. Faces right. The walking frame only moves the legs.
+        /// </summary>
+        static string[] LiaPattern(bool walking)
+        {
+            var rows = new List<string>
+            {
+                "..............",
+                ".....HHHHH....",
+                "....HHHHHHH...",
+                "...HHHhhhHHH..",
+                "...HHhSSSShH..",
+                "...HHSSSSSSH..",
+                "...HHSSSSSSS..",
+                "...HHSsSSSsS..",
+                "...HHSSSSSSH..",
+                "...HH.SSSSS...",
+                "...H..WDDW....",
+                ".....DDDDDD...",
+                "....SDDDDDDS..",
+                ".....dDDDDd...",
+                "....DDDDDDDD..",
+                "....dDDDDDDd..",
+            };
+            rows.AddRange(walking
+                ? new[] { "....LL....LL..", "....BB....BBB." }
+                : new[] { ".....LL..LL...", ".....BB..BBB.." });
+            return rows.ToArray();
+        }
+
+        static Color LiaColor(char c) => c switch
+        {
+            'H' => Hex("583422"), 'h' => Hex("784a2e"),   // hair
+            'S' => Hex("f3a787"), 's' => Hex("f2d3ac"),   // skin, rosy cheeks
+            'D' => Hex("54609a"), 'd' => Hex("3c4470"),   // dress
+            'W' => Hex("ded6c4"),                         // collar
+            'L' => Hex("341c27"), 'B' => Hex("1e161a"),   // legs, shoes
+            _ => Color.clear,
+        };
+
+        static readonly string[] SackPattern =
+        {
+            "...EE.....",
+            "..ESSE....",
+            ".EBBBBE...",
+            "EBGBBBBE..",
+            "EBBBBGBBE.",
+            "EBBBBBBBE.",
+            "EBBGBBBBE.",
+            ".EBBBBBE..",
+            "..EEEEE...",
+            "..........",
+        };
+
+        /// <summary>Cottage size and the pixel rectangles (bottom-left origin) of its window panes and door.</summary>
+        public const int CottageWidth = 88, CottageHeight = 72;
+        public static readonly RectInt CottageWindow = new RectInt(17, 15, 17, 17);
+        public static readonly RectInt CottageDoor = new RectInt(53, 4, 13, 30);
+
+        /// <summary>
+        /// A small wooden cottage with a gable roof, a chimney, a door and a window whose panes are transparent,
+        /// so whatever stands behind the cottage (a lit room, Lia and her lantern) shows through. 88x72 px.
+        /// </summary>
+        static Texture2D CottageTexture()
+        {
+            var t = Blank(CottageWidth, CottageHeight);
+            Color outline = Hex("1c120c"), plankA = Hex("6e4a2c"), plankB = Hex("5e3f25"), seam = Hex("3e2816"), post = Hex("4a2f1a");
+            Color stoneA = Hex("6a6470"), stoneB = Hex("55505c"), roofA = Hex("7a3f2e"), roofB = Hex("5e2f22"), roofEdge = Hex("3a1a14");
+            Color frame = Hex("3a2414"), sill = Hex("8a6440"), doorA = Hex("4e3220"), doorB = Hex("432a1a"), brass = Hex("d8a040");
+
+            for (int x = 6; x < 82; x++)                                   // stone foundation
+                for (int y = 0; y < 4; y++) t.SetPixel(x, y, ((x / 4) + (y / 2)) % 2 == 0 ? stoneA : stoneB);
+            for (int y = 4; y < 41; y++)                                   // plank walls
+                for (int x = 8; x < 80; x++)
+                {
+                    bool joint = y % 4 == 3 || (x * 7 + (y / 4) * 13) % 23 == 0;
+                    t.SetPixel(x, y, joint ? seam : (y / 4) % 2 == 0 ? plankA : plankB);
+                }
+            Fill(t, 8, 4, 10, 40, post);
+            Fill(t, 77, 4, 79, 40, post);
+
+            for (int y = 39; y < 71; y++)                                  // gable roof with rows of shingles
+            {
+                int half = (int)(44 * (1f - (y - 39) / 31f)) + 1;
+                for (int x = 44 - half; x < 44 + half; x++)
+                {
+                    bool edge = x <= 44 - half + 1 || x >= 44 + half - 2 || y == 39;
+                    bool shingleLine = y % 4 == 0 || (x + (y / 4) * 3) % 6 == 0;
+                    t.SetPixel(x, y, edge ? roofEdge : shingleLine ? roofB : roofA);
+                }
+            }
+            Fill(t, 60, 52, 67, 68, stoneB);                               // chimney
+            Fill(t, 61, 53, 66, 68, stoneA);
+            Fill(t, 59, 68, 68, 70, outline);
+
+            Fill(t, 15, 13, 35, 33, frame);                                // window frame, four clear panes, sill
+            foreach (var pane in new[] { new RectInt(17, 15, 8, 8), new RectInt(26, 15, 8, 8), new RectInt(17, 24, 8, 8), new RectInt(26, 24, 8, 8) })
+                Fill(t, pane.xMin, pane.yMin, pane.xMax - 1, pane.yMax - 1, Color.clear);
+            Fill(t, 13, 11, 37, 12, sill);
+            Fill(t, 13, 11, 37, 11, frame);
+
+            Fill(t, 51, 4, 67, 35, frame);                                 // door
+            for (int x = 53; x < 66; x++)
+                for (int y = 4; y < 34; y++) t.SetPixel(x, y, (x - 53) % 4 == 0 ? doorB : doorA);
+            Fill(t, 53, 18, 65, 18, frame);
+            Fill(t, 53, 28, 65, 28, frame);
+            Fill(t, 63, 16, 63, 17, brass);
+            return t;
+        }
+
+        /// <summary>The castle on the horizon: a dark silhouette with three towers and a few lit windows. 64x56 px.</summary>
+        static Texture2D CastleSilhouetteTexture()
+        {
+            var t = Blank(64, 56);
+            var dark = Hex("201a33");
+            Fill(t, 4, 0, 59, 24, dark);
+            for (int x = 4; x < 60; x += 4) Fill(t, x, 25, x + 1, 26, dark);    // battlements
+            foreach (var (x0, width, top) in new[] { (8, 10, 38), (46, 10, 34), (26, 12, 48) })
+            {
+                Fill(t, x0, 0, x0 + width - 1, top, dark);
+                for (int x = x0; x < x0 + width; x += 3) Fill(t, x, top + 1, x + 1, top + 2, dark);
+            }
+            Fill(t, 30, 49, 33, 53, dark);                                      // spire
+            Fill(t, 31, 54, 32, 55, dark);
+            var lit = Hex("f0c060");
+            t.SetPixel(31, 40, lit); t.SetPixel(12, 28, lit); t.SetPixel(50, 20, lit);
+            return t;
+        }
+
+        static Texture2D Blank(int w, int h)
+        {
+            var t = new Texture2D(w, h);
+            t.SetPixels(new Color[w * h].Populate(Color.clear));
+            return t;
+        }
+
+        /// <summary>Fills an inclusive pixel rectangle (bottom-left origin).</summary>
+        static void Fill(Texture2D t, int x0, int y0, int x1, int y1, Color c)
+        {
+            for (int x = x0; x <= x1; x++)
+                for (int y = y0; y <= y1; y++)
+                    if (x >= 0 && y >= 0 && x < t.width && y < t.height) t.SetPixel(x, y, c);
         }
 
         static readonly string[] NotePattern =

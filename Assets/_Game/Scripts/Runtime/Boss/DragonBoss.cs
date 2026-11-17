@@ -340,20 +340,43 @@ namespace TileVania
             if (spriteRenderer) spriteRenderer.color = new Color(1f, 0.85f, 0.85f);
             // Its last words (only if it spoke before the fight: beats never play out of order)
             if (Story.TryBegin("boss_defeat", "boss_intro")) yield return DialogueBox.Run(StoryScript.BossDefeat, DialogueMode.Blocking);
+
+            // It sinks to the floor at the side of the hall, wounded, and stays: it is still the Keeper of the memory,
+            // and the ending needs it (StoryDirector).
             Vector3 from = transform.position;
-            for (float t = 0; t < 1f; t += Time.deltaTime / 1.2f)
+            Color fromColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+            for (float t = 0; t < 1f; t += Time.deltaTime / 1.4f)
             {
-                transform.position = from + Vector3.down * (t * t * 4f);
-                if (spriteRenderer) spriteRenderer.color = new Color(1f, 1f, 1f, 1f - t);
+                transform.position = Vector3.Lerp(from, RestPosition, Mathf.SmoothStep(0f, 1f, t));
+                if (spriteRenderer) spriteRenderer.color = Color.Lerp(fromColor, WoundedTint, t);
                 yield return null;
             }
+            transform.position = RestPosition;
+            if (spriteRenderer) spriteRenderer.color = WoundedTint;
+            var wings = visual != null ? visual.GetComponent<SpriteFrameAnimator>() : null;
+            if (wings != null) wings.fps = 1f; // tired, slow wingbeats
+            AudioManager.Play(Sfx.RockImpact, 0.5f);
+            CameraController.Shake(0.2f, 0.3f);
             if (treasure != null)
             {
+                FaceTowards(treasure.transform.position.x);
                 treasure.gameObject.SetActive(true);
                 Fx.Burst(treasure.transform.position + Vector3.up * 0.6f, new Color(1f, 0.85f, 0.3f), 30, 6f, 0.8f);
                 AudioManager.Play(Sfx.Key);
             }
-            gameObject.SetActive(false);
+        }
+
+        /// <summary>Where the defeated Keeper rests: on the floor near the right wall of the hall.</summary>
+        public Vector3 RestPosition => new Vector3(arenaRight - 3.5f, floorY, 0f);
+
+        /// <summary>The Keeper's colour after its defeat (dim and grey).</summary>
+        public static readonly Color WoundedTint = new Color(0.55f, 0.5f, 0.6f);
+
+        public void FaceTowards(float x)
+        {
+            if (spriteRenderer == null) return;
+            bool right = x > transform.position.x;
+            spriteRenderer.flipX = spriteFacesRight ? !right : right;
         }
     }
 }

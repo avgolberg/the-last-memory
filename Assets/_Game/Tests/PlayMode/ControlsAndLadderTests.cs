@@ -97,6 +97,46 @@ namespace TileVania.Tests
         }
 
         [UnityTest]
+        public IEnumerator C_ShootsUp_StandingOrRunning_WithoutJumping([Values(0f, 1f)] float run)
+        {
+            yield return Load(SceneLoader.Level1);
+            float y0 = player.transform.position.y;
+            Move(run, 0f);
+            yield return new WaitForSeconds(0.2f);
+            GameInput.Simulated.ShootUpPressed = true;
+            yield return null;
+            yield return null;
+            var proj = Object.FindFirstObjectByType<Projectile>();
+            Assert.IsNotNull(proj, "C should fire");
+            var v = proj.GetComponent<Rigidbody2D>().linearVelocity;
+            Assert.Greater(v.y, 10f, "C fires straight up");
+            Assert.Less(Mathf.Abs(v.x), 0.01f, "not sideways, even while running");
+            yield return new WaitForSeconds(0.3f);
+            Assert.Less(Mathf.Abs(player.transform.position.y - y0), 0.05f, "C never jumps");
+            if (run > 0f) Assert.Greater(player.Body.linearVelocity.x, 5f, "running continues while shooting up");
+            Move(0f, 0f);
+        }
+
+        [UnityTest]
+        public IEnumerator C_ShootsUp_InMidAir_AndJumpStillWorks()
+        {
+            yield return Load(SceneLoader.Level1);
+            float y0 = player.transform.position.y;
+            GameInput.Simulated.JumpPressed = true;
+            GameInput.Simulated.JumpHeld = true;
+            yield return new WaitForSeconds(0.12f);
+            GameInput.Simulated.ShootUpPressed = true;
+            yield return null;
+            yield return null;
+            var proj = Object.FindFirstObjectByType<Projectile>();
+            Assert.IsNotNull(proj, "C fires in the air");
+            Assert.Greater(proj.GetComponent<Rigidbody2D>().linearVelocity.y, 10f);
+            yield return new WaitForSeconds(0.15f);
+            Assert.Greater(player.transform.position.y, y0 + 1.5f, "the jump is not interrupted by the upward shot");
+            GameInput.Simulated.JumpHeld = false;
+        }
+
+        [UnityTest]
         public IEnumerator X_ShootsForward()
         {
             yield return Load(SceneLoader.Level1);

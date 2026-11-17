@@ -53,7 +53,8 @@ namespace TileVania
     public static class StoryScript
     {
         public const string Hero = "???";
-        public const string Dragon = "Dragon";
+        public const string Keeper = "The Keeper";
+        public const string Lia = "Lia";
         public const string Distant = "A distant voice";
         public const string Small = "A small voice";
 
@@ -62,19 +63,21 @@ namespace TileVania
         static DialogueLine Voice(string who, string text) => new DialogueLine(who, text, LineStyle.Voice);
         static DialogueLine Note(string text) => new DialogueLine("Note", text, LineStyle.Note);
         static DialogueLine Memory(string text) => new DialogueLine("Memory", text, LineStyle.Memory);
+        /// <summary>An interrupted line: it closes by itself as soon as it has been typed.</summary>
+        static DialogueLine CutOff(string who, string text) => new DialogueLine(who, text, LineStyle.Speech, cutOff: true);
 
         // ------------------------------------------------------------------ forest: the awakening
         public static readonly DialogueLine[] OpeningVoice = { Voice(Distant, "...wait for me...") };
 
         public static readonly DialogueLine[] OpeningWake =
         {
-            Say(Hero, "Where... am I?"),
+            Say(Hero, "Where am I?"),
             Say(Hero, "I can't remember anything. Not even my name."),
         };
 
         public static readonly DialogueLine[] FirstGem =
         {
-            Think("(It's warm. For a heartbeat I heard someone laughing.)"),
+            Think("(It's warm. For a moment I heard someone laughing.)"),
             Think("(As if it holds a piece of something I've lost.)"),
         };
 
@@ -87,42 +90,121 @@ namespace TileVania
 
         public const string FinalLine = "Somewhere, a lantern is still burning.";
 
-        // ------------------------------------------------------------------ treasure chamber: the last memory
+        // ------------------------------------------------------------------ treasure chamber: the Keeper
         public static readonly DialogueLine[] BossIntro =
         {
-            Say(Dragon, "So. You've come back."),
+            Say(Keeper, "So. You've come back."),
             Say(Hero, "You know me?"),
-            Say(Dragon, "Better than you know yourself. You know how this ends."),
-            Say(Hero, "Then why am I here?"),
-            Say(Dragon, "Because you never remember the answer."),
-            Say(Dragon, "I made you a promise once. I will keep it again."),
+            Say(Keeper, "Better than you know yourself. Long ago, you gave me something to keep."),
+            Say(Hero, "I don't remember."),
+            Say(Keeper, "You weren't meant to. And you made me promise to stop you if you ever came back for it."),
+            Say(Keeper, "I keep my promises."),
         };
 
-        public static readonly DialogueLine[] BossRetry = { Say(Dragon, "Again, then.") };
+        public static readonly DialogueLine[] BossRetry = { Say(Keeper, "Again, then.") };
 
         public static readonly DialogueLine[] BossDefeat =
         {
-            Say(Dragon, "Enough... You have won. You always do."),
+            Say(Keeper, "Enough. You've won. You always do."),
             Say(Hero, "What's inside that chest?"),
-            Say(Dragon, "What you gave me to keep. What you begged me never to give back."),
-            Say(Dragon, "Take it, if you can bear it. You never can."),
+            Say(Keeper, "The memory you gave me. The one you begged me never to give back."),
+            Say(Keeper, "Open it, and you'll remember why."),
         };
 
-        public static readonly DialogueLine[] EndingReunion =
+        // ------------------------------------------------------------------ the ending: the chest opens
+        public static readonly DialogueLine[] EndingCall =
         {
             Voice(Small, "You said you'd be home by morning."),
-            Say(Hero, "I know you... I know you!"),
-            Voice(Small, "I kept the lantern burning, so you could find your way home."),
+            Say(Hero, "I know that voice..."),
         };
 
-        /// <summary>The name never arrives. With every memory shard found, the hero gets one syllable further.</summary>
-        public static DialogueLine[] EndingName(bool allMemories) => new[]
+        // The flashback. MemoryFlashback plays these between its staging steps.
+
+        /// <summary>Memory 1, leaving home: a poor cottage at night, a promise, and the lantern in the window.</summary>
+        public static readonly DialogueLine[] MemoryLeaving =
         {
-            new DialogueLine(Hero, allMemories ? "Your name is... Li—" : "Your name is... your name is—", LineStyle.Speech, cutOff: true),
+            Say(Lia, "Do you really have to go?"),
+            Say(Hero, "There's no food left, Lia. The dragon's gold could feed us for years."),
+            Say(Lia, "Will you be home by morning?"),
+            Say(Hero, "I promise. I'll be back by morning, with enough gold for both of us."),
+            Say(Lia, "Then I'll keep the lantern in the window, so you can find your way home."),
+            Say(Hero, "Lock the door, and get some sleep."),
         };
 
-        public static readonly DialogueLine[] EndingLoss = { Say(Hero, "No... not again...") };
+        /// <summary>Memory 2, the last encounter: Lia follows with her lantern, and the hero sends her away.</summary>
+        public static readonly DialogueLine[] MemoryFollowCall = { Say(Lia, "Wait! Wait for me!") };
+
+        public static readonly DialogueLine[] MemoryFollowHarsh =
+        {
+            Say(Hero, "Lia? I told you to stay home!"),
+            CutOff(Lia, "I just wanted to—"),
+            Say(Hero, "Go home! I don't want you following me!"),
+        };
+
+        public static readonly DialogueLine[] MemoryFollowLast = { Think("(That was the last time I ever saw her.)") };
+
+        /// <summary>Memory 3, returning home: dawn, an empty house, and a search that finds nothing.</summary>
+        public static readonly DialogueLine[] MemoryReturnArrive = { Say(Hero, "Lia! I'm back! Look, we're rich!") };
+        public static readonly DialogueLine[] MemoryReturnEmpty = { Say(Hero, "Lia?") };
+        public static readonly DialogueLine[] MemoryReturnShout = { Say(Hero, "LIA!") };
+
+        public static readonly DialogueLine[] MemoryReturnSearch =
+        {
+            Think("(I searched the forest for days. I called her name until my voice was gone.)"),
+            Think("(She never came home.)"),
+        };
+
+        /// <summary>Memory 4, the bargain: the hero asks the Keeper to take the memory, and makes it promise.</summary>
+        public static readonly DialogueLine[] MemoryBargain =
+        {
+            Say(Hero, "I can't stop hearing her voice."),
+            Say(Keeper, "Your sister?"),
+            Say(Hero, "I told her I didn't want her. Those were the last words she ever heard from me."),
+            Say(Hero, "I've searched everywhere. I can't live with it. Take it away."),
+            Say(Keeper, "I can take the memory, but not the guilt alone. You would forget her, and everything she was part of."),
+            Say(Hero, "Then take everything."),
+            Say(Keeper, "Part of you will come looking for it one day. What should I do then?"),
+            Say(Hero, "Stop me. Promise you'll never give it back, no matter how I beg."),
+            Say(Keeper, "I promise."),
+        };
+
+        // Back in the present: the hero remembers, and chooses to forget again.
+
+        public static readonly DialogueLine[] EndingRemember =
+        {
+            Say(Hero, "Lia..."),
+            Say(Hero, "I remember now. All of it."),
+            Say(Keeper, "Then you know why you came to me."),
+            Say(Keeper, "You could keep it this time. It would hurt. But she would be remembered."),
+        };
+
+        /// <summary>With every memory shard found, the hero hesitates: the cycle could end. They still choose to forget.</summary>
+        public static readonly DialogueLine[] EndingHesitate =
+        {
+            Say(Hero, "If I keep it... maybe I could still find her."),
+            Say(Keeper, "Maybe."),
+        };
+
+        /// <summary>The choice. The hero asks for the memory to be taken again; nothing forces them.</summary>
+        public static readonly DialogueLine[] EndingChoice =
+        {
+            Say(Hero, "...I can't."),
+            Say(Hero, "Take it back. Take all of it."),
+        };
+
+        public static readonly DialogueLine[] EndingKeeperAgrees = { Say(Keeper, "Then I will keep it for you. As I promised.") };
+        public static readonly DialogueLine[] EndingApology = { Say(Hero, "I'm sorry, Lia.") };
+        public static readonly DialogueLine[] EndingForget = { Think("(And again, I chose to forget.)") };
         public static readonly DialogueLine[] EndingWhisper = { Think("(Don't... open... the chest...)") };
+
+        /// <summary>The lines after the flashback, up to the choice. The hesitation only plays when every shard was found.</summary>
+        public static DialogueLine[] EndingDecision(bool allMemories)
+        {
+            var lines = new List<DialogueLine>(EndingRemember);
+            if (allMemories) lines.AddRange(EndingHesitate);
+            lines.AddRange(EndingChoice);
+            return lines.ToArray();
+        }
 
         // ------------------------------------------------------------------ story points placed by the layouts
         static readonly Dictionary<string, StoryBeat> beats = new Dictionary<string, StoryBeat>();
@@ -140,7 +222,7 @@ namespace TileVania
                     Note("This time, don't open the chest."),
                     Say(Hero, "What chest? ...The handwriting looks familiar."),
                     Say(Hero, "Someone has carved notches into this tree. {Notches} of them."),
-                    Say(Hero, "Some are old and grown over. The last one is fresh."),
+                    Say(Hero, "Most are old and grown over. The last one is fresh."),
                 },
             });
             Add(new StoryBeat
@@ -148,21 +230,21 @@ namespace TileVania
                 id = "forest_lantern", kind = StoryPointKind.Readable, prop = StoryProp.RustedLantern, prompt = "Examine",
                 lines = new[]
                 {
-                    new DialogueLine("", "A rusted lantern lies half-buried in the moss. Someone carried it a long way.", LineStyle.Thought),
+                    new DialogueLine("", "A rusted lantern lies half-buried in the moss. Someone carried it a long way from home.", LineStyle.Thought),
                     Say(Hero, "Why does looking at it hurt?"),
                 },
             });
             Add(new StoryBeat
             {
                 id = "memory_1", kind = StoryPointKind.MemoryShard, prop = StoryProp.MemoryShard,
-                lines = new[] { Memory("A small house at the edge of a forest. A lantern in the window."), Say(Hero, "Home? Was it mine?") },
+                lines = new[] { Memory("A small house at the edge of the forest. A lantern in the window."), Say(Hero, "Was that my home?") },
             });
             Add(new StoryBeat
             {
                 id = "memory_2", kind = StoryPointKind.MemoryShard, prop = StoryProp.MemoryShard,
                 lines = new[]
                 {
-                    Voice(Distant, "Wait for me! You're walking too fast!"),
+                    Voice(Distant, "Wait! Wait for me!"),
                     Say(Hero, "A child's voice. I know it. Why can't I see her face?"),
                 },
             });
@@ -180,8 +262,8 @@ namespace TileVania
                 {
                     Say("Faint Ghost", "Back again?"),
                     Say(Hero, "You know me? Then tell me who I am."),
-                    Say("Faint Ghost", "Nobody here remembers that anymore. Not even you."),
-                    Say("Faint Ghost", "You always rush past us, as if someone is waiting for you."),
+                    Say("Faint Ghost", "I can't. You gave that away, down in the treasure chamber."),
+                    Say("Faint Ghost", "You always hurry past us, as if someone is waiting for you at home."),
                 },
             });
             Add(new StoryBeat
@@ -189,20 +271,20 @@ namespace TileVania
                 id = "castle_door", kind = StoryPointKind.AutoDialogue, prop = StoryProp.DoorScrawl, requires = "castle_ghost",
                 lines = new[]
                 {
-                    Say(Hero, "\"I was so close.\" ...It's the same handwriting as the note."),
+                    Say(Hero, "\"I was so close.\" It's the same handwriting as the note."),
                     Say(Hero, "And the same marks as the tree. {Notches} of them."),
-                    Say(Hero, "I've stood at this door before. {Notches} times."),
+                    Say(Hero, "I've stood at this door {notches} times before. Why can't I remember what's behind it?"),
                 },
             });
             Add(new StoryBeat
             {
                 id = "memory_3", kind = StoryPointKind.MemoryShard, prop = StoryProp.MemoryShard,
-                lines = new[] { Memory("\"I'll be back by morning. With enough gold for both of us.\""), Say(Hero, "I said that. But to whom?") },
+                lines = new[] { Memory("\"I'll be back by morning, with enough gold for both of us.\""), Say(Hero, "I said that. But to whom?") },
             });
             Add(new StoryBeat
             {
                 id = "memory_4", kind = StoryPointKind.MemoryShard, prop = StoryProp.MemoryShard,
-                lines = new[] { Memory("Calling a name through the trees until my voice was gone."), Say(Hero, "...What name?") },
+                lines = new[] { Memory("Calling a name through the trees until my voice was gone."), Say(Hero, "What name?") },
             });
         }
 

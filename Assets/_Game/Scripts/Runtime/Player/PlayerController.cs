@@ -138,6 +138,7 @@ namespace TileVania
         ///  - Up arrow on a ladder climbs instead of jumping.
         ///  - Up arrow elsewhere jumps after a tiny grace period; pressing X in that window
         ///    (Up + X) fires upward and cancels the jump.
+        ///  - C always fires straight up and never changes movement (no timing needed).
         ///  - Z / Space always jump immediately (Down + Z / Space drops through one-way ledges).
         /// </summary>
         void ReadActions()
@@ -149,7 +150,11 @@ namespace TileVania
                 else pendingUpJump = Time.time;
             }
 
-            if (GameInput.ShootPressed)
+            if (GameInput.ShootUpPressed)
+            {
+                TryShoot(aimUp: true);
+            }
+            else if (GameInput.ShootPressed)
             {
                 bool aimUp = input.y > 0.5f;
                 if (aimUp && pendingUpJump >= 0f) pendingUpJump = -1f; // Up + X: aim, do not jump
@@ -353,7 +358,7 @@ namespace TileVania
             if (shootTimer > 0f || IsClimbing || projectilePrefab == null) return;
             shootTimer = shootCooldown;
             attackAnimTimer = 0.25f;
-            // Up + X shoots straight up (useful against flying enemies and the boss).
+            // C (or Up + X) shoots straight up (useful against flying enemies and the boss).
             bool up = aimUp;
             Vector2 dir = up ? Vector2.up : new Vector2(Facing, 0f);
             Vector2 origin = (Vector2)transform.position + new Vector2(0f, up ? 1.2f : muzzleOffset.y);

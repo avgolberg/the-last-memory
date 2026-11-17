@@ -18,7 +18,7 @@ namespace TileVania
 
     /// <summary>
     /// Reusable dialogue box: speaker name, typewriter text, keyboard-only advancing
-    /// (Z / Space / X / Enter / C; the first press completes the line, the next advances).
+    /// (Z / Space / X / C / Enter; the first press completes the line, the next advances).
     /// Lives on the in-game canvas; use the static API from anywhere.
     /// </summary>
     public class DialogueBox : MonoBehaviour
@@ -35,6 +35,9 @@ namespace TileVania
 
         /// <summary>Total number of dialogues started (tests use it to check that a beat fired exactly once).</summary>
         public static int StartedCount { get; private set; }
+
+        /// <summary>Raised whenever a line appears (tests record the order of a conversation with it).</summary>
+        public static event Action<DialogueLine> LineShown;
 
         class Request
         {
@@ -57,6 +60,7 @@ namespace TileVania
         static void ResetStatics()
         {
             TestAutoAdvance = false;
+            LineShown = null;
             StartedCount = 0;
         }
 
@@ -178,6 +182,7 @@ namespace TileVania
             if (speakerPlate != null) speakerPlate.SetActive(hasSpeaker);
             if (speakerText != null) speakerText.text = line.speaker ?? "";
             bodyText.text = Story.Format(line.text);
+            LineShown?.Invoke(line);
             bodyText.color = StyleColor(line.style);
             bodyText.fontStyle = line.style == LineStyle.Speech ? FontStyles.Normal : FontStyles.Italic;
             bodyText.ForceMeshUpdate();
@@ -195,7 +200,7 @@ namespace TileVania
                 int visible = Mathf.Min(total, Mathf.FloorToInt(t * charactersPerSecond));
                 bodyText.maxVisibleCharacters = visible;
                 if (visible >= total) break;
-                // Ignore the press that opened the dialogue (C / Enter on a readable).
+                // Ignore the press that opened the dialogue (Enter on a readable).
                 if (mode != DialogueMode.Bark && t > 0.15f && GameInput.AdvancePressed) break;
                 yield return null;
             }
@@ -206,7 +211,8 @@ namespace TileVania
             if (TestAutoAdvance) yield break;
             if (line.cutOff) { yield return new WaitForSecondsRealtime(0.35f); yield break; }
 
-            float hold = mode == DialogueMode.Bark ? 1.6f + total * 0.035f : 2.4f + total * 0.05f;
+            // How long a line stays before moving on by itself (barks and cutscenes; blocking dialogue waits for a key).
+            float hold = mode == DialogueMode.Bark ? 1.6f + total * 0.035f : 1.5f + total * 0.04f;
             if (hintText != null) hintText.enabled = mode != DialogueMode.Bark;
             float shown = 0f;
             while (true)

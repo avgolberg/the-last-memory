@@ -7,9 +7,10 @@ namespace TileVania
     /// Gameplay input built in code on top of the Input System, so no scene wiring is needed.
     ///
     /// Keyboard (primary): arrows move, Up arrow = context jump (climbs when on a ladder,
-    /// aims when combined with X), Z / Space = jump, X = shoot, C / Enter = examine, Esc = pause.
+    /// aims when combined with X), Z / Space = jump, X = shoot, C = shoot straight up, Enter = examine, Esc = pause.
     /// Dialogue advances with Z / Space / X / C / Enter.
-    /// Gamepad: stick/D-pad move and climb, South = jump, West = shoot, Start = pause.
+    /// Gamepad: stick/D-pad move and climb, South = jump, West = shoot, Right shoulder = shoot up,
+    /// North = examine, Start = pause.
     ///
     /// The Up arrow is reported separately (<see cref="UpJumpPressed"/>) so the player controller can
     /// decide between jumping, climbing and aiming. Tests drive the player through <see cref="Simulated"/>.
@@ -27,7 +28,9 @@ namespace TileVania
             /// <summary>Up arrow pressed this frame (also set Move.y = 1 to hold it).</summary>
             public bool UpPressed;
             public bool ShootPressed;
-            /// <summary>C / Enter / gamepad North pressed this frame (examine).</summary>
+            /// <summary>C / gamepad right shoulder pressed this frame (shoot straight up).</summary>
+            public bool ShootUpPressed;
+            /// <summary>Enter / gamepad North pressed this frame (examine).</summary>
             public bool InteractPressed;
             /// <summary>A dialogue-advance key pressed this frame.</summary>
             public bool AdvancePressed;
@@ -36,7 +39,7 @@ namespace TileVania
 
         public static SimulatedInput Simulated;
 
-        static InputAction move, jump, upKey, shoot, pause, interact, advance;
+        static InputAction move, jump, upKey, shoot, shootUp, pause, interact, advance;
         static bool initialized;
 
         static void Init()
@@ -63,12 +66,16 @@ namespace TileVania
             shoot.AddBinding("<Keyboard>/x");
             shoot.AddBinding("<Gamepad>/buttonWest");
 
+            // A dedicated key for upward shots: no timing with the Up arrow needed (Up + X still works too).
+            shootUp = new InputAction("ShootUp", InputActionType.Button);
+            shootUp.AddBinding("<Keyboard>/c");
+            shootUp.AddBinding("<Gamepad>/rightShoulder");
+
             pause = new InputAction("Pause", InputActionType.Button);
             pause.AddBinding("<Keyboard>/escape");
             pause.AddBinding("<Gamepad>/start");
 
             interact = new InputAction("Interact", InputActionType.Button);
-            interact.AddBinding("<Keyboard>/c");
             interact.AddBinding("<Keyboard>/enter");
             interact.AddBinding("<Keyboard>/numpadEnter");
             interact.AddBinding("<Gamepad>/buttonNorth");
@@ -79,7 +86,7 @@ namespace TileVania
             advance.AddBinding("<Gamepad>/buttonEast");
             advance.AddBinding("<Gamepad>/buttonWest");
 
-            move.Enable(); jump.Enable(); upKey.Enable(); shoot.Enable(); pause.Enable(); interact.Enable(); advance.Enable();
+            move.Enable(); jump.Enable(); upKey.Enable(); shoot.Enable(); shootUp.Enable(); pause.Enable(); interact.Enable(); advance.Enable();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -142,6 +149,17 @@ namespace TileVania
             }
         }
 
+        /// <summary>Shoot straight up (C, gamepad right shoulder).</summary>
+        public static bool ShootUpPressed
+        {
+            get
+            {
+                if (Simulated.Enabled) { bool v = Simulated.ShootUpPressed; Simulated.ShootUpPressed = false; return v; }
+                Init();
+                return shootUp.WasPressedThisFrame();
+            }
+        }
+
         public static bool PausePressed
         {
             get
@@ -152,7 +170,7 @@ namespace TileVania
             }
         }
 
-        /// <summary>Examine something (C, Enter, gamepad North).</summary>
+        /// <summary>Examine something (Enter, gamepad North).</summary>
         public static bool InteractPressed
         {
             get

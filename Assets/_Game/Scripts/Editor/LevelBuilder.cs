@@ -330,7 +330,7 @@ namespace TileVania.EditorTools
             globalLight.color = castle ? new Color(0.68f, 0.62f, 0.95f) : new Color(1f, 0.97f, 0.92f);
             globalLight.targetSortingLayers = SortingLayer.layers.Select(l => l.id).ToArray();
 
-            BuildParallax(L, castle, cam);
+            var parallax = BuildParallax(L, castle, cam);
 
             // --- Kill zone below the level
             var kz = new GameObject("KillZone");
@@ -356,7 +356,7 @@ namespace TileVania.EditorTools
             director.player = player.GetComponent<PlayerController>();
             director.treeMarks = treeMarks;
             if (treeMarks != null) director.treeStandX = treeMarks.transform.position.x - 0.9f;
-            director.silhouetteSprite = ArtSetup.GetSprite("Player/Hero_Idle.png", "Hero_Idle_0");
+            director.silhouetteSprite = ArtSetup.SingleSprite("Generated/Lia_0.png");
             director.lanternSprite = ArtSetup.SingleSprite("Generated/Lantern_Lit.png");
             director.gemSprites = new[] { "Gem_Red", "Gem_Green", "Gem_Blue", "Gem_Orange" }
                 .Select(n => ArtSetup.GetSprite("Items/Gems_CaveTileset.png", n)).ToArray();
@@ -389,6 +389,9 @@ namespace TileVania.EditorTools
                     dsr.transform.localPosition = Vector3.zero;
                     ba.doorCollider = dc; ba.doorVisual = dv.transform; ba.doorClosedY = 0f; ba.doorOpenY = 3f;
                 }
+
+                // --- The ending's flashback set, to the right of the level (never visible during play)
+                MemoryStageBuilder.Build(director, boss, finalChest, globalLight, parallax);
             }
 
             ContentBuilder.EnsureFolder(Scenes);
@@ -546,7 +549,7 @@ namespace TileVania.EditorTools
             }
         }
 
-        static void BuildParallax(Layout L, bool castle, Camera cam)
+        static GameObject BuildParallax(Layout L, bool castle, Camera cam)
         {
             var root = new GameObject("Parallax");
             float cx = cam.transform.position.x, cy = cam.transform.position.y;
@@ -583,6 +586,7 @@ namespace TileVania.EditorTools
                 Layer("MountainsFar", Bg("mountain_large_blue"), new Vector2(0.85f, 0.88f), 1f, -90, new Color(0.62f, 0.68f, 0.88f), true);
                 Layer("MountainsNear", Bg("mountain_blue"), new Vector2(0.7f, 0.78f), 1.5f, -85, new Color(0.42f, 0.55f, 0.62f), true);
             }
+            return root;
         }
     }
 }

@@ -5,9 +5,10 @@ using UnityEngine.Rendering.Universal;
 namespace TileVania
 {
     /// <summary>
-    /// Runs the two story cutscenes with the existing gameplay objects (no timeline):
+    /// Runs the story cutscenes with the existing gameplay objects (no timeline):
     ///  - the opening in the forest (first waking, or the loop after the ending), and
-    ///  - the ending at the final chest, which returns to the forest.
+    ///  - the ending at the final chest: Lia's figure in the light, the flashback (<see cref="MemoryFlashback"/>),
+    ///    the hero's choice to forget again, and the return to the forest.
     /// One per level scene (placed by the level builder). Docs/STORY_SPEC.md describes the sequence.
     /// </summary>
     public class StoryDirector : MonoBehaviour
@@ -28,7 +29,10 @@ namespace TileVania
         [Tooltip("Forest: where the hero stops in front of the tree during the loop.")]
         public float treeStandX = 5.6f;
 
-        [Header("Ending art")]
+        [Header("Ending (Treasure Chamber)")]
+        public MemoryFlashback flashback;
+        public DragonBoss keeper;
+        [Tooltip("Lia's figure in the light of the chest.")]
         public Sprite silhouetteSprite;
         public Sprite lanternSprite;
         public Sprite[] gemSprites;
@@ -50,7 +54,8 @@ namespace TileVania
             InCutscene = false;
         }
 
-        static IEnumerator Wait(float seconds) => new WaitForSecondsRealtime(seconds / Mathf.Max(0.01f, CutsceneSpeed));
+        /// <summary>A real-time wait that the tests can speed up with <see cref="CutsceneSpeed"/>.</summary>
+        public static IEnumerator Wait(float seconds) => new WaitForSecondsRealtime(seconds / Mathf.Max(0.01f, CutsceneSpeed));
 
         /// <summary>Called by the LevelManager on level start. Returns true if an opening cutscene takes over.</summary>
         public bool TryHandleLevelStart()
@@ -176,6 +181,7 @@ namespace TileVania
         {
             InCutscene = true;
             var summary = Story.CaptureSummary();
+            bool allMemories = Story.MemoriesFound >= Story.TotalMemories;
             GameSession.Instance.TimerRunning = false;
             if (player != null)
             {
@@ -190,53 +196,48 @@ namespace TileVania
             float side = player != null && player.transform.position.x > chestPos.x ? -1f : 1f; // beyond the chest, away from the hero
             if (player != null) player.SetFacing((int)side);
 
-            // The light swells
-            var glow = chest.glow;
-            float glow0 = glow != null ? glow.intensity : 0f, radius0 = glow != null ? glow.pointLightOuterRadius : 0f;
-            for (float t = 0; t < 2f; t += Time.unscaledDeltaTime * CutsceneSpeed)
+            // 1. The light swells, and a small figure with a lantern stands in it.
+            yield return SwellLight(chest);
+            var figure = MakeSilhouette(chestPos + new Vector3(side * 1.9f, 0f), side);
+            yield return FadeFigure(figure, 0f, 0.95f, 1.6f);
+            yield return DialogueBox.Run(StoryScript.EndingCall, DialogueMode.Cinematic);
+
+            // 2. The memory comes back: the flashback, in and out of a white flash.
+            AudioManager.Play(Sfx.Portal, 0.5f);
+            yield return CinematicOverlay.FadeTo(Color.white, 1f, 0.9f);
+            if (flashback != null) yield return flashback.Play(figure);
+            if (player != null) player.SetFacing((int)side);
+            yield return CinematicOverlay.FadeTo(Color.white, 0f, 1.4f);
+            yield return Wait(0.5f);
+
+            // 3. The present: the hero remembers Lia... and chooses to forget her again.
+            yield return DialogueBox.Run(StoryScript.EndingDecision(allMemories), DialogueMode.Cinematic);
+            if (keeper != null && player != null)
             {
-                float k = t / 2f;
-                if (glow != null) { glow.intensity = Mathf.Lerp(glow0, 3.2f, k); glow.pointLightOuterRadius = Mathf.Lerp(radius0, 9f, k); }
-                if (Random.value < 0.25f) Fx.Burst(chestPos + new Vector3(Random.Range(-0.6f, 0.6f), 0.7f), new Color(1f, 0.85f, 0.45f), 2, 1.5f, 1.1f, -2f, 1.5f);
-                yield return null;
+                player.SetFacing(keeper.transform.position.x > player.transform.position.x ? 1 : -1); // turns to the Keeper
+                yield return Wait(0.4f);
+                yield return KeeperRises();
             }
+            yield return DialogueBox.Run(StoryScript.EndingKeeperAgrees, DialogueMode.Cinematic);
+            if (player != null) player.SetFacing((int)side); // one last look at her
+            yield return Wait(0.6f);
+            yield return DialogueBox.Run(StoryScript.EndingApology, DialogueMode.Cinematic);
 
-            // A small figure with a lantern, standing in the light
-            var silhouette = MakeSilhouette(chestPos + new Vector3(side * 1.9f, 0f), side);
-            var silSr = silhouette.GetComponent<SpriteRenderer>();
-            var lanternLight = silhouette.GetComponentInChildren<Light2D>();
-            for (float t = 0; t < 1.6f; t += Time.unscaledDeltaTime * CutsceneSpeed)
-            {
-                SetAlpha(silhouette, Mathf.Clamp01(t / 1.6f) * 0.95f);
-                yield return null;
-            }
-            SetAlpha(silhouette, 0.95f);
-
-            yield return DialogueBox.Run(StoryScript.EndingReunion, DialogueMode.Cinematic);
-            yield return WalkTo(chestPos.x - side * 0.6f, 0.25f);
-            yield return DialogueBox.Run(StoryScript.EndingName(Story.MemoriesFound >= Story.TotalMemories), DialogueMode.Cinematic);
-
-            // It slips away
-            Fx.Burst(silhouette.transform.position + Vector3.up * 0.6f, new Color(1f, 0.9f, 0.7f), 40, 3f, 1.2f, -1.5f, 2f);
-            var flicker = silhouette.GetComponentInChildren<LightFlicker>();
+            // 4. The Keeper takes the memory: Lia's figure dissolves and every fragment scatters.
+            HUD.SetVisible(true);
+            Fx.Burst(figure.transform.position + Vector3.up * 0.6f, new Color(1f, 0.9f, 0.7f), 40, 3f, 1.2f, -1.5f, 2f);
+            var flicker = figure.GetComponentInChildren<LightFlicker>();
             if (flicker != null) flicker.enabled = false;
-            for (float t = 0; t < 0.5f; t += Time.unscaledDeltaTime * CutsceneSpeed)
-            {
-                SetAlpha(silhouette, 0.95f * (1f - t / 0.5f));
-                if (lanternLight != null) lanternLight.intensity = Mathf.Lerp(1.2f, 0f, t / 0.5f);
-                yield return null;
-            }
-            Destroy(silhouette);
-            _ = silSr;
+            yield return FadeFigure(figure, 0.95f, 0f, 0.6f);
+            Destroy(figure);
 
-            // Every gem, every fragment, scatters
             var scatter = StartCoroutine(ScatterGems(chestPos + Vector3.up * 0.6f));
             CameraController.Shake(0.25f, 1.4f);
             AudioManager.Play(Sfx.Portal);
             AudioManager.Play(Sfx.BossDie, 0.4f);
             yield return Wait(0.5f);
             yield return CinematicOverlay.FadeTo(Color.white, 1f, 1.5f);
-            yield return DialogueBox.Run(StoryScript.EndingLoss, DialogueMode.Cinematic);
+            yield return DialogueBox.Run(StoryScript.EndingForget, DialogueMode.Cinematic);
             yield return CinematicOverlay.FadeTo(Color.black, 1f, 1.2f);
             yield return Wait(0.9f);
             AudioManager.Play(Sfx.RockImpact, 0.3f); // a knife in bark: one more notch
@@ -252,11 +253,58 @@ namespace TileVania
             SceneLoader.Load(SceneLoader.Level1, 0.2f);
         }
 
+        /// <summary>The chest's light grows until it fills the hall.</summary>
+        IEnumerator SwellLight(TreasureChest chest)
+        {
+            var glow = chest.glow;
+            Vector3 chestPos = chest.transform.position;
+            float glow0 = glow != null ? glow.intensity : 0f, radius0 = glow != null ? glow.pointLightOuterRadius : 0f;
+            for (float t = 0; t < 2f; t += Time.unscaledDeltaTime * CutsceneSpeed)
+            {
+                float k = t / 2f;
+                if (glow != null) { glow.intensity = Mathf.Lerp(glow0, 3.2f, k); glow.pointLightOuterRadius = Mathf.Lerp(radius0, 9f, k); }
+                if (Random.value < 0.25f) Fx.Burst(chestPos + new Vector3(Random.Range(-0.6f, 0.6f), 0.7f), new Color(1f, 0.85f, 0.45f), 2, 1.5f, 1.1f, -2f, 1.5f);
+                yield return null;
+            }
+        }
+
+        static IEnumerator FadeFigure(GameObject figure, float from, float to, float time)
+        {
+            var light = figure.GetComponentInChildren<Light2D>();
+            for (float t = 0; t < time; t += Time.unscaledDeltaTime * CutsceneSpeed)
+            {
+                float a = Mathf.Lerp(from, to, t / time);
+                SetAlpha(figure, a);
+                if (light != null) light.intensity = 1.2f * a;
+                yield return null;
+            }
+            SetAlpha(figure, to);
+            if (light != null) light.intensity = 1.2f * to;
+        }
+
+        /// <summary>The wounded Keeper lifts itself up to take the memory back.</summary>
+        IEnumerator KeeperRises()
+        {
+            var aura = keeper.GetComponentInChildren<Light2D>();
+            Vector3 from = keeper.transform.position, to = from + Vector3.up * 1.2f;
+            Color c0 = keeper.spriteRenderer.color, c1 = new Color(0.9f, 0.88f, 0.95f);
+            float aura0 = aura != null ? aura.intensity : 0f;
+            AudioManager.Play(Sfx.BossWarning, 0.35f);
+            for (float t = 0; t < 1.2f; t += Time.unscaledDeltaTime * CutsceneSpeed)
+            {
+                float k = Mathf.SmoothStep(0f, 1f, t / 1.2f);
+                keeper.transform.position = Vector3.Lerp(from, to, k);
+                keeper.spriteRenderer.color = Color.Lerp(c0, c1, k);
+                if (aura != null) aura.intensity = Mathf.Lerp(aura0, 1.6f, k);
+                yield return null;
+            }
+        }
+
         GameObject MakeSilhouette(Vector3 feet, float side)
         {
             var go = new GameObject("Silhouette");
             go.transform.position = feet;
-            go.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+            // Lia, as a dark shape against the light (the same sprite as in the flashback)
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = silhouetteSprite;
             if (unlitMaterial != null) sr.sharedMaterial = unlitMaterial;
@@ -267,7 +315,7 @@ namespace TileVania
 
             var lantern = new GameObject("Lantern");
             lantern.transform.SetParent(go.transform, false);
-            lantern.transform.localPosition = new Vector3(side > 0f ? -0.55f : 0.55f, 0.75f, 0f);
+            lantern.transform.localPosition = new Vector3(side > 0f ? -0.45f : 0.45f, 0.38f, 0f);
             var lsr = lantern.AddComponent<SpriteRenderer>();
             lsr.sprite = lanternSprite;
             if (unlitMaterial != null) lsr.sharedMaterial = unlitMaterial;

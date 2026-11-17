@@ -235,7 +235,19 @@ namespace TileVania.EditorTools
                     bool nextOk = EditorBuildSettings.scenes.Any(b => Path.GetFileNameWithoutExtension(b.path) == lm.nextScene);
                     if (!nextOk) { sb.AppendLine($"  nextScene '{lm.nextScene}' not in build settings"); problems++; }
                     if (lm.player == null || lm.music == null) { sb.AppendLine("  LevelManager missing player or music"); problems++; }
-                    if (Object.FindFirstObjectByType<StoryDirector>() == null) { sb.AppendLine("  no StoryDirector"); problems++; }
+                    var director = Object.FindFirstObjectByType<StoryDirector>();
+                    if (director == null) { sb.AppendLine("  no StoryDirector"); problems++; }
+
+                    // The boss scene plays the ending: it needs the flashback set, its actors and the Keeper.
+                    if (Object.FindFirstObjectByType<DragonBoss>(FindObjectsInactive.Include) != null)
+                    {
+                        var fb = Object.FindFirstObjectByType<MemoryFlashback>(FindObjectsInactive.Include);
+                        bool wired = fb != null && director != null && director.flashback == fb && director.keeper != null
+                                     && fb.hero != null && fb.lia != null && fb.liaLantern != null && fb.goldSack != null
+                                     && fb.room != null && fb.windowLantern != null && fb.doorway != null && fb.globalLight != null
+                                     && fb.keeper != null && fb.player != null && fb.chest != null;
+                        if (!wired) { sb.AppendLine("  the ending's flashback is missing or not wired"); problems++; }
+                    }
                 }
 
                 // Story points: every beat must exist and appear only once per scene.

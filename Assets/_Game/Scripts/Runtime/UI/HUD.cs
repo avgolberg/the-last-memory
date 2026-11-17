@@ -23,6 +23,8 @@ namespace TileVania
         public TMP_Text bossNameText;
         public CanvasGroup promptGroup;
         public TMP_Text promptText;
+        [Tooltip("The whole HUD (hidden during the flashback).")]
+        public CanvasGroup hudGroup;
 
         [Tooltip("Toast heights: normal, and while a dialogue box covers the bottom of the screen.")]
         public float messageY = 110f, messageYWithDialogue = 300f;
@@ -40,6 +42,14 @@ namespace TileVania
             if (promptGroup) promptGroup.alpha = 0f;
         }
 
+        public static bool IsVisible => instance == null || instance.hudGroup == null || instance.hudGroup.alpha > 0.5f;
+
+        /// <summary>Shows or hides the whole HUD (hearts, gems, keys, toasts).</summary>
+        public static void SetVisible(bool visible)
+        {
+            if (instance != null && instance.hudGroup != null) instance.hudGroup.alpha = visible ? 1f : 0f;
+        }
+
         void Update()
         {
             if (messageGroup == null) return;
@@ -50,12 +60,12 @@ namespace TileVania
 
         public static bool PromptVisible => instance != null && instance.promptGroup != null && instance.promptGroup.alpha > 0.5f;
 
-        /// <summary>Shows "C  Examine" style prompts for the object that owns it.</summary>
+        /// <summary>Shows "Enter  Examine" style prompts for the object that owns it.</summary>
         public static void SetPrompt(object owner, string action)
         {
             if (instance == null || instance.promptGroup == null) return;
             instance.promptOwner = owner;
-            if (instance.promptText) instance.promptText.text = $"<b>C</b>   {action}";
+            if (instance.promptText) instance.promptText.text = $"<b>Enter</b>   {action}";
             instance.promptGroup.alpha = 1f;
         }
 

@@ -280,15 +280,15 @@ namespace TileVania.Tests
             int guard = 0;
             while (!boss.IsDead && guard++ < 100) { boss.TakeDamage(new DamageInfo(1, Vector2.zero)); yield return null; }
             Assert.IsTrue(boss.IsDead);
-            yield return new WaitForSeconds(3.5f);
-            var chest = GameObject.Find("Chest_Gold");
+            GameObject chest = null;
+            for (float t = 0; t < 8f && (chest = GameObject.Find("Chest_Gold")) == null; t += Time.unscaledDeltaTime) yield return null;
             Assert.IsNotNull(chest, "treasure should appear after the boss dies");
             int cycles = Story.CompletedCycles;
             try
             {
                 yield return TeleportAndSettle(chest.transform.position + Vector3.up * 0.1f);
                 // The chest holds the last memory: the ending plays, then the game loops back to the forest.
-                for (float t = 0; t < 40f && !(SceneManager.GetActiveScene().name == SceneLoader.Level1 && GameMenus.EndingVisible); t += Time.unscaledDeltaTime)
+                for (float t = 0; t < 60f && !(SceneManager.GetActiveScene().name == SceneLoader.Level1 && GameMenus.EndingVisible); t += Time.unscaledDeltaTime)
                     yield return null;
                 Assert.AreEqual(SceneLoader.Level1, SceneManager.GetActiveScene().name, "the ending returns to the forest");
                 Assert.IsNotNull(GameObject.Find("VictoryPanel"), "the ending panel follows the loop");

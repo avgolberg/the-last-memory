@@ -5,7 +5,7 @@ namespace TileVania
 {
     /// <summary>
     /// A story beat placed in a level (digits 1-9 in the ASCII layouts). Depending on the beat it plays when the
-    /// player walks into its trigger zone, or offers an "Examine" prompt (C / Enter). Every beat fires once per cycle
+    /// player walks into its trigger zone, or offers an "Examine" prompt (Enter). Every beat fires once per cycle
     /// and only after its prerequisite (see <see cref="Story.TryBegin"/>); readables can be re-read.
     /// </summary>
     public class StoryPoint : MonoBehaviour

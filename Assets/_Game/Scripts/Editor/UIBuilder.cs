@@ -196,6 +196,8 @@ namespace TileVania.EditorTools
             var canvas = Canvas("GameCanvas", 10);
             var hud = canvas.AddComponent<HUD>();
             var hudRoot = Stretch(canvas, "HUD").gameObject;
+            hud.hudGroup = hudRoot.AddComponent<CanvasGroup>();
+            hud.hudGroup.blocksRaycasts = false;
 
             hud.heartFull = ArtSetup.SingleSprite("Generated/Heart_Full.png");
             hud.heartEmpty = ArtSetup.SingleSprite("Generated/Heart_Empty.png");
@@ -230,11 +232,11 @@ namespace TileVania.EditorTools
             hud.bossBarFill = fill;
             hud.bossNameText.text = "The Keeper";
 
-            // Examine prompt ("C  Examine"), above the toast line
+            // Examine prompt ("Enter  Examine"), above the toast line
             var prompt = Rect(hudRoot, "Prompt", new Vector2(0.5f, 0f), new Vector2(0, 200), new Vector2(300, 56));
             Img(prompt, UISprite, new Color(0.05f, 0.03f, 0.08f, 0.8f), true);
             hud.promptGroup = prompt.gameObject.AddComponent<CanvasGroup>();
-            hud.promptText = Label(prompt.gameObject, "Text", "<b>C</b>   Examine", 30, Gold, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(290, 52));
+            hud.promptText = Label(prompt.gameObject, "Text", "<b>Enter</b>   Examine", 30, Gold, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(290, 52));
 
             BuildCinematicOverlay(canvas);
             BuildDialogueBox(canvas);
@@ -374,8 +376,8 @@ namespace TileVania.EditorTools
             controller.creditsPanel.SetActive(false);
 
             Label(canvas, "Hint",
-                "Move: Left / Right    Jump: Up, Z or Space    Ladders: Up / Down    Shoot: X    Shoot up: Up + X\n" +
-                "Drop through ledge: Down + Z    Examine: C    Dialogue: Z / X / Enter    Pause: Esc    Menus: arrows + Enter",
+                "Move: Left / Right    Jump: Up, Z or Space    Ladders: Up / Down    Shoot: X    Shoot up: C (or Up + X)\n" +
+                "Drop through ledge: Down + Z    Examine: Enter    Dialogue: Z / X / Enter    Pause: Esc    Menus: arrows + Enter",
                 24, Text * new Color(1, 1, 1, 0.75f), new Vector2(0.5f, 0f), new Vector2(0, 24), new Vector2(1800, 70));
         }
     }

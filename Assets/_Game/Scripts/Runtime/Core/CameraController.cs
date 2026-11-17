@@ -24,10 +24,43 @@ namespace TileVania
 
         public static CameraController Current => current;
 
+        [Tooltip("How slowly the camera pans between cutscene shots.")]
+        public float panSmoothTime = 0.9f;
+
+        float defaultSize;
+
+        /// <summary>
+        /// While set, the camera frames this point instead of following the target and ignores the level bounds
+        /// (used by the flashback, which is staged outside the playable level).
+        /// </summary>
+        public Vector2? Focus { get; private set; }
+
         void Awake()
         {
             cam = GetComponent<Camera>();
             current = this;
+            defaultSize = cam.orthographicSize;
+        }
+
+        /// <summary>Cuts straight to a cutscene shot at the given zoom (orthographic size).</summary>
+        public void CutTo(Vector2 point, float orthographicSize)
+        {
+            Focus = point;
+            cam.orthographicSize = orthographicSize;
+            basePos = new Vector3(point.x, point.y, -10f);
+            transform.position = PixelSnap(basePos);
+            velocity = Vector3.zero;
+        }
+
+        /// <summary>Pans smoothly to a new point in the current cutscene shot.</summary>
+        public void PanTo(Vector2 point) => Focus = point;
+
+        /// <summary>Ends the cutscene shot: normal zoom, back on the player.</summary>
+        public void EndShot()
+        {
+            Focus = null;
+            cam.orthographicSize = defaultSize;
+            SnapToTarget();
         }
 
         void Start() => SnapToTarget();
@@ -50,15 +83,23 @@ namespace TileVania
 
         void LateUpdate()
         {
-            if (target == null) return;
-            var rb = target.GetComponent<Rigidbody2D>();
-            float vx = rb != null ? rb.linearVelocity.x : 0f;
-            float desiredLook = Mathf.Abs(vx) > 0.5f ? Mathf.Sign(vx) * lookAhead : lookAheadX;
-            lookAheadX = Mathf.MoveTowards(lookAheadX, desiredLook, Time.deltaTime * 4f);
+            if (Focus.HasValue)
+            {
+                var shot = new Vector3(Focus.Value.x, Focus.Value.y, -10f);
+                basePos = Vector3.SmoothDamp(basePos, shot, ref velocity, panSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+            }
+            else
+            {
+                if (target == null) return;
+                var rb = target.GetComponent<Rigidbody2D>();
+                float vx = rb != null ? rb.linearVelocity.x : 0f;
+                float desiredLook = Mathf.Abs(vx) > 0.5f ? Mathf.Sign(vx) * lookAhead : lookAheadX;
+                lookAheadX = Mathf.MoveTowards(lookAheadX, desiredLook, Time.deltaTime * 4f);
 
-            var goal = new Vector3(target.position.x + lookAheadX, target.position.y + verticalOffset, -10f);
-            var pos = Vector3.SmoothDamp(basePos, goal, ref velocity, smoothTime);
-            basePos = Clamp(pos);
+                var goal = new Vector3(target.position.x + lookAheadX, target.position.y + verticalOffset, -10f);
+                var pos = Vector3.SmoothDamp(basePos, goal, ref velocity, smoothTime);
+                basePos = Clamp(pos);
+            }
 
             var final = basePos;
             if (shakeTime > 0f)

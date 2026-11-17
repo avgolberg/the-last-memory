@@ -96,13 +96,33 @@ namespace TileVania.Tests
         }
 
         [Test]
-        public void Script_EveryBeatHasLines_AndTheNameIsNeverFinished()
+        public void Script_EveryBeatHasLines_AndTheDecisionIsTheHeros()
         {
             foreach (var b in StoryScript.AllBeats)
                 Assert.IsTrue(b.lines != null && b.lines.Length > 0 && b.lines.Length <= 6, $"beat {b.id} should have 1-6 lines");
-            Assert.IsTrue(StoryScript.EndingName(false)[0].cutOff);
-            StringAssert.Contains("Li—", StoryScript.EndingName(true)[0].text, "all memories: one syllable further");
             Assert.AreEqual("This time, don't open the chest.", StoryScript.LoopNote[0].text);
+
+            // The last encounter: Lia's sentence is cut off by the hero's harsh last words.
+            Assert.IsTrue(StoryScript.MemoryFollowHarsh[1].cutOff);
+            Assert.AreEqual(StoryScript.Hero, StoryScript.MemoryFollowHarsh[2].speaker);
+            StringAssert.Contains("Go home", StoryScript.MemoryFollowHarsh[2].text);
+
+            // The bargain ends with the Keeper's promise.
+            var bargain = StoryScript.MemoryBargain;
+            Assert.AreEqual(StoryScript.Keeper, bargain[bargain.Length - 1].speaker);
+            StringAssert.Contains("promise", bargain[bargain.Length - 1].text);
+
+            // The choice is made by the hero, and the Keeper first offers to let them keep the memory.
+            var decision = StoryScript.EndingDecision(false);
+            var last = decision[decision.Length - 1];
+            Assert.AreEqual(StoryScript.Hero, last.speaker);
+            StringAssert.Contains("Take it back", last.text);
+            Assert.IsTrue(decision.Any(l => l.speaker == StoryScript.Keeper && l.text.Contains("You could keep it")));
+
+            // Every shard found: the hero hesitates (two more lines), but still chooses to forget.
+            var hesitant = StoryScript.EndingDecision(true);
+            Assert.AreEqual(decision.Length + StoryScript.EndingHesitate.Length, hesitant.Length);
+            Assert.AreEqual(last.text, hesitant[hesitant.Length - 1].text);
         }
 
         // ------------------------------------------------------------------ dialogue box
@@ -213,6 +233,9 @@ namespace TileVania.Tests
             yield return Teleport(new Vector2(74.5f, 10f));
             Assert.IsTrue(HUD.PromptVisible, "standing by the lantern shows the Examine prompt");
             Assert.AreEqual(started, DialogueBox.StartedCount, "nothing plays until the player asks");
+            GameInput.Simulated.ShootUpPressed = true;
+            yield return new WaitForSeconds(0.2f);
+            Assert.AreEqual(started, DialogueBox.StartedCount, "C shoots upward; it no longer examines");
             GameInput.Simulated.InteractPressed = true;
             yield return new WaitForSeconds(0.2f);
             Assert.AreEqual(started + 1, DialogueBox.StartedCount);
@@ -290,7 +313,7 @@ namespace TileVania.Tests
             yield return Teleport(new Vector2(12.5f, 3f));
             yield return WaitUntilReal(() => DialogueBox.IsBlocking, 5f);
             Assert.IsTrue(DialogueBox.IsBlocking, "the dragon recognises the hero");
-            Assert.AreEqual(StoryScript.Dragon, DialogueBox.CurrentSpeaker);
+            Assert.AreEqual(StoryScript.Keeper, DialogueBox.CurrentSpeaker);
             Assert.AreEqual(0f, Time.timeScale);
             Assert.IsFalse(boss.hurtbox.enabled, "no attacks or damage until the conversation ends");
 
@@ -322,27 +345,74 @@ namespace TileVania.Tests
             Assert.AreEqual(1f, Time.timeScale);
         }
 
-        [UnityTest]
-        public IEnumerator Ending_LoopsBackToTheForest_WithOneMoreNotch()
+        /// <summary>Defeats the Keeper (after its intro), checks that it stays in the hall, and opens the chest.</summary>
+        IEnumerator DefeatTheKeeperAndOpenTheChest()
         {
-            yield return Load(SceneLoader.Boss, autoAdvance: true);
-            int cyclesBefore = Story.CompletedCycles;
             var boss = Object.FindFirstObjectByType<DragonBoss>();
             yield return Teleport(new Vector2(12.5f, 3f));
             yield return new WaitForSeconds(2.5f);
             player.GetComponent<PlayerHealth>().Heal(3);
             while (!boss.IsDead) { boss.TakeDamage(new DamageInfo(1, Vector2.zero)); yield return null; }
-            yield return new WaitForSeconds(3.5f);
-            Assert.IsTrue(Story.Has("boss_defeat"), "the dragon's last words follow its intro");
-            GameSession.Instance.AddGems(5);
             var chest = GameObject.Find("Chest_Gold");
-            Assert.IsNotNull(chest);
+            yield return WaitUntilReal(() => (chest = GameObject.Find("Chest_Gold")) != null, 8f);
+            Assert.IsTrue(Story.Has("boss_defeat"), "the dragon's last words follow its intro");
+            Assert.IsNotNull(chest, "the chest appears after the Keeper's defeat");
+            Assert.IsTrue(boss.gameObject.activeInHierarchy, "the defeated Keeper stays in the hall for the ending");
+            Assert.AreEqual(boss.RestPosition, boss.transform.position, "it rests on the floor");
+            Assert.IsFalse(boss.hurtbox.enabled, "a resting Keeper can't hurt or be hurt");
             yield return Teleport(chest.transform.position + Vector3.up * 0.1f);
             yield return WaitUntilReal(() => StoryDirector.InCutscene, 2f);
+        }
+
+        [UnityTest]
+        public IEnumerator Ending_LoopsBackToTheForest_WithOneMoreNotch()
+        {
+            yield return Load(SceneLoader.Boss, autoAdvance: true);
+            int cyclesBefore = Story.CompletedCycles;
+            GameSession.Instance.AddGems(5);
+
+            // Record the conversation and the order of the memories.
+            var lines = new List<DialogueLine>();
+            var memories = new List<int>();
+            System.Action<DialogueLine> record = l => lines.Add(l);
+            DialogueBox.LineShown += record;
+            var watcher = new GameObject("MemoryWatcher").AddComponent<MemoryWatcher>();
+            watcher.seen = memories;
+            Object.DontDestroyOnLoad(watcher.gameObject);
+
+            yield return DefeatTheKeeperAndOpenTheChest();
             Assert.IsTrue(StoryDirector.InCutscene, "the chest starts the ending, not a victory screen");
             Assert.IsFalse(GameMenus.EndingVisible);
 
-            yield return WaitUntilReal(() => SceneManager.GetActiveScene().name == SceneLoader.Level1 && GameMenus.EndingVisible, 40f);
+            yield return WaitUntilReal(() => SceneManager.GetActiveScene().name == SceneLoader.Level1 && GameMenus.EndingVisible, 60f);
+            DialogueBox.LineShown -= record;
+            Object.Destroy(watcher.gameObject);
+
+            // The flashback: four memories, in order, then back to the present.
+            CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, memories, "leaving home, the last encounter, returning home, the bargain");
+            int At(string text)
+            {
+                int i = lines.FindIndex(l => l.text == text);
+                Assert.GreaterOrEqual(i, 0, $"the line \"{text}\" should be spoken");
+                return i;
+            }
+            int call = At(StoryScript.EndingCall[0].text);
+            int promise = At("Will you be home by morning?");
+            int harsh = At("Go home! I don't want you following me!");
+            int lastTime = At(StoryScript.MemoryFollowLast[0].text);
+            int empty = At("Lia?");
+            int bargain = At("I promise.");
+            int remember = At("Lia...");
+            int choice = At("Take it back. Take all of it.");
+            int agrees = At(StoryScript.EndingKeeperAgrees[0].text);
+            int forget = At(StoryScript.EndingForget[0].text);
+            int whisper = At(StoryScript.EndingWhisper[0].text);
+            Assert.IsTrue(call < promise && promise < harsh && harsh < lastTime && lastTime < empty && empty < bargain
+                          && bargain < remember && remember < choice && choice < agrees && agrees < forget && forget < whisper,
+                "the story is told in order: the call, the four memories, the choice, forgetting, the whisper");
+            Assert.IsFalse(lines.Any(l => l.text == StoryScript.EndingHesitate[0].text), "no hesitation without every shard");
+            Assert.AreEqual(StoryScript.Hero, lines[choice].speaker, "the hero chooses to forget; nothing forces them");
+
             Assert.AreEqual(SceneLoader.Level1, SceneManager.GetActiveScene().name, "everything fades back to the forest");
             Assert.IsTrue(GameMenus.EndingVisible, "the loop ends on the ending panel");
             Assert.AreEqual(cyclesBefore + 1, Story.CompletedCycles, "one more cycle");
@@ -378,6 +448,55 @@ namespace TileVania.Tests
             Assert.IsTrue(StoryDirector.InCutscene, "a new game opens on the hero waking up");
             yield return WaitUntilReal(() => !StoryDirector.InCutscene, 20f);
             Assert.IsTrue(Object.FindFirstObjectByType<PlayerController>().ControlEnabled);
+        }
+
+        [UnityTest]
+        public IEnumerator Flashback_OneKeyPress_AdvancesAtMostOneLine()
+        {
+            yield return Load(SceneLoader.Boss, autoAdvance: true);
+            yield return DefeatTheKeeperAndOpenTheChest();
+            yield return WaitUntilReal(() => MemoryFlashback.CurrentMemory == 1 && DialogueBox.IsCinematic, 30f);
+            Assert.AreEqual(1, MemoryFlashback.CurrentMemory, "the chest leads into the first memory");
+            Assert.IsFalse(HUD.IsVisible, "hearts and gems are hidden during the flashback");
+
+            // From here the player reads at their own pace.
+            DialogueBox.TestAutoAdvance = false;
+            int shown = 0;
+            System.Action<DialogueLine> count = _ => shown++;
+            DialogueBox.LineShown += count;
+            yield return WaitUntilReal(() => shown > 0, 15f);   // a fresh line has started
+            yield return new WaitForSecondsRealtime(0.3f);
+            int before = shown;
+            GameInput.Simulated.AdvancePressed = true;            // one press...
+            yield return new WaitForSecondsRealtime(0.35f);
+            DialogueBox.LineShown -= count;
+            Assert.LessOrEqual(shown - before, 1, "...moves on by at most one line");
+            Assert.AreEqual(1, MemoryFlashback.CurrentMemory, "and never skips to another memory");
+            Assert.IsTrue(DialogueBox.IsCinematic, "the conversation is still going");
+        }
+
+        [Test]
+        public void NotchCount_IsSavedBetweenSessions()
+        {
+            Story.SetCompletedCycles(2);
+            PlayerPrefs.Save();
+            Assert.AreEqual(2, PlayerPrefs.GetInt("story_completed_cycles"), "stored in PlayerPrefs, not in memory");
+            Assert.AreEqual(Story.NotchesBeforeFirstPlay + 2, Story.NotchCount);
+            Story.CompleteCycle(default);
+            Assert.AreEqual(3, PlayerPrefs.GetInt("story_completed_cycles"), "finishing a cycle saves one more notch");
+            Assert.AreEqual(Story.NotchesBeforeFirstPlay + 3, Story.LastCycle.notches);
+        }
+    }
+
+    /// <summary>Records which flashback memories play, in order (survives the scene change at the end).</summary>
+    public class MemoryWatcher : MonoBehaviour
+    {
+        public List<int> seen;
+
+        void Update()
+        {
+            int m = MemoryFlashback.CurrentMemory;
+            if (m != 0 && (seen.Count == 0 || seen[seen.Count - 1] != m)) seen.Add(m);
         }
     }
 }
