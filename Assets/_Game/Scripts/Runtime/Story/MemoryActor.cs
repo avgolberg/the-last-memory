@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// A character in the flashback (the hero as they were, and Lia). It is only scenery: no physics and no input.

@@ -8,12 +8,12 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Tilemaps;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>
     /// One-click (or batch-mode) regeneration of the whole game:
-    /// Tools > TileVania > Rebuild Game, or
-    /// Unity.exe -batchmode -projectPath ... -executeMethod TileVania.EditorTools.GameBuildPipeline.BuildAllBatch -quit
+    /// Tools > The Last Memory > Rebuild Game, or
+    /// Unity.exe -batchmode -projectPath ... -executeMethod LastMemory.EditorTools.GameBuildPipeline.BuildAllBatch -quit
     /// </summary>
     public static class GameBuildPipeline
     {
@@ -39,7 +39,7 @@ namespace TileVania.EditorTools
             },
         };
 
-        [MenuItem("Tools/TileVania/Rebuild Game (art, prefabs, scenes)")]
+        [MenuItem("Tools/The Last Memory/Rebuild Game (art, prefabs, scenes)")]
         public static void BuildAll()
         {
             ContentBuilder.SetupProject();
@@ -51,7 +51,7 @@ namespace TileVania.EditorTools
             foreach (var l in Levels) LevelBuilder.Build(l);
             SetBuildSettings();
             AssetDatabase.SaveAssets();
-            Debug.Log("[TileVania] Build complete.\n" + Validate());
+            Debug.Log("[LastMemory] Build complete.\n" + Validate());
         }
 
         public static void BuildAllBatch()
@@ -73,7 +73,7 @@ namespace TileVania.EditorTools
         public const string WindowsBuildPath = "Builds/" + GameInfo.BuildName + "_Windows/" + GameInfo.Title + ".exe";
 
         /// <summary>Builds the Windows player to verify the game builds.</summary>
-        [MenuItem("Tools/TileVania/Build Windows Player")]
+        [MenuItem("Tools/The Last Memory/Build Windows Player")]
         public static void BuildWindowsPlayer()
         {
             var options = new BuildPlayerOptions
@@ -84,7 +84,7 @@ namespace TileVania.EditorTools
                 options = BuildOptions.None,
             };
             var report = BuildPipeline.BuildPlayer(options);
-            Debug.Log($"[TileVania] Player build: {report.summary.result}, errors={report.summary.totalErrors}, size={report.summary.totalSize / (1024 * 1024)} MB");
+            Debug.Log($"[LastMemory] Player build: {report.summary.result}, errors={report.summary.totalErrors}, size={report.summary.totalSize / (1024 * 1024)} MB");
         }
 
         public static void BuildWindowsPlayerBatch()
@@ -95,7 +95,7 @@ namespace TileVania.EditorTools
 
         public static void ValidateBatch()
         {
-            Debug.Log("[TileVania] " + Validate());
+            Debug.Log("[LastMemory] " + Validate());
             EditorApplication.Exit(0);
         }
 
@@ -191,7 +191,7 @@ namespace TileVania.EditorTools
         }
 
         // ------------------------------------------------------------------ validation
-        [MenuItem("Tools/TileVania/Validate Scenes")]
+        [MenuItem("Tools/The Last Memory/Validate Scenes")]
         public static string Validate()
         {
             var sb = new StringBuilder();
@@ -265,12 +265,12 @@ namespace TileVania.EditorTools
                 if (storyIds.Count > 0) sb.AppendLine($"  story points: {string.Join(", ", storyIds.OrderBy(i => i))}");
             }
             sb.Insert(0, $"Validation: {problems} problem(s)\n");
-            File.WriteAllText("Temp/tilevania_validation.txt", sb.ToString());
+            File.WriteAllText("Temp/validation.txt", sb.ToString());
             return sb.ToString();
         }
 
         // ------------------------------------------------------------------ screenshots
-        [MenuItem("Tools/TileVania/Capture Preview Screenshots")]
+        [MenuItem("Tools/The Last Memory/Capture Preview Screenshots")]
         public static void CaptureScreenshots()
         {
             Directory.CreateDirectory("Docs/Screenshots");
@@ -288,8 +288,8 @@ namespace TileVania.EditorTools
             });
             Capture(SceneLoader.Boss, "_ending", new[] { new Vector2(26, 10) }, () =>
             {
-                ShowOnly("VictoryPanel");
-                Object.FindFirstObjectByType<GameMenus>(FindObjectsInactive.Include).victoryStats.text =
+                ShowOnly("EndingPanel");
+                Object.FindFirstObjectByType<GameMenus>(FindObjectsInactive.Include).endingStats.text =
                     "Gems gathered: 64\nMemories glimpsed: 3 of 4\nTime: 14:32    Deaths: 5\nNotches on the tree: 8";
             });
 

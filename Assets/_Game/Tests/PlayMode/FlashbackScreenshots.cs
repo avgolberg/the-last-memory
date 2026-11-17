@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace TileVania.Tests
+namespace LastMemory.Tests
 {
     /// <summary>
     /// Not part of the normal run ([Explicit]): plays the real ending at normal speed and saves screenshots of the

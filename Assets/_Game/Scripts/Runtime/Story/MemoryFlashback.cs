@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// The flashback in the ending (Docs/STORY_SPEC.md §2.4). Four short memories, played with two actors, the

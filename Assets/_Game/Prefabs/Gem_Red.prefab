@@ -81,7 +81,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 47ce249d572fc684189e64d458ea3b41, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Gem
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Gem
   sound: 4
   sparkleColor: {r: 1, g: 0.4, b: 0.4, a: 1}
   magnetToPlayer: 0
@@ -188,7 +188,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2089f6500a330649811e5fede739795, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Bobbing
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Bobbing
   amplitude: {x: 0, y: 0.12}
   frequency: 0.8
   randomPhase: 1

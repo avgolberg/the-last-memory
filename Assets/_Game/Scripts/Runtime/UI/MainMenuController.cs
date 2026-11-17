@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
     public class MainMenuController : MonoBehaviour
     {

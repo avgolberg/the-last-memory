@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Portal to the next scene. Only the player can trigger it (projectiles never reach this layer),

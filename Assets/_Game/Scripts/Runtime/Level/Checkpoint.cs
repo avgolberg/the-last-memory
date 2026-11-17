@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Touch to set the respawn point. Lights a flame and restores health.</summary>
     public class Checkpoint : MonoBehaviour

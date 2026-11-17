@@ -2,11 +2,11 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Per-scene coordinator: level start (music, title), checkpoints, death and retry,
-    /// restart, completion and victory. Progression uses explicit scene names, never build-index wrapping.
+    /// restart and level completion. Progression uses explicit scene names, never build-index wrapping.
     /// </summary>
     public class LevelManager : MonoBehaviour
     {

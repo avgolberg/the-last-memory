@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Straight-flying projectile on its own physics layer (PlayerProjectile or EnemyProjectile).

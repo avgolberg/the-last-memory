@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>
     /// Turns an ASCII layout (Assets/_Game/Levels/*.txt) into a complete, editable scene:

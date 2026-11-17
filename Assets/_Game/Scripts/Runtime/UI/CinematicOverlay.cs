@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Screen-space effects for the story scenes: letterbox bars, a full-screen colour fade (black or white)

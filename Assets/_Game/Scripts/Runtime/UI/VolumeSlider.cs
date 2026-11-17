@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Binds a UI slider to the saved music or SFX volume.</summary>
     [RequireComponent(typeof(Slider))]

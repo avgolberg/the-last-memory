@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Hearts, gem counter, held keys, level title card, message toasts, the examine prompt and the boss health bar.</summary>
     public class HUD : MonoBehaviour

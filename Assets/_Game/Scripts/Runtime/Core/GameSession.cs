@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     public enum KeyType { Gold, Treasure }
 

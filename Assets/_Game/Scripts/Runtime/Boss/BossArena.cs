@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Starts the boss fight when the player walks in and seals the entrance behind them.

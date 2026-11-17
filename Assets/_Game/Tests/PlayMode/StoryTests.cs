@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
-namespace TileVania.Tests
+namespace LastMemory.Tests
 {
     /// <summary>
     /// Narrative coverage: the dialogue box, story-beat ordering, story points placed by the layouts,

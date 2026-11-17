@@ -1,4 +1,4 @@
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>The game's name and tagline, used by the menu, the build settings and the Windows build.</summary>
     public static class GameInfo

@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>Builds the in-game canvas prefab (HUD + menus) and the main menu canvas.</summary>
     public static class UIBuilder
@@ -255,18 +255,18 @@ namespace TileVania.EditorTools
             menus.retryButton = MakeButton(death, "Retry from Checkpoint");
             menus.deathMenuButton = MakeButton(death, "Main Menu");
 
-            // The ending panel (kept under its old object name, "VictoryPanel")
-            var victory = Panel(canvas, "VictoryPanel", "The Last Memory", Gold, "The cycle begins again.", 680);
-            menus.victoryPanel = victory.transform.parent.parent.gameObject;
-            menus.victoryStats = Label(victory, "Stats", "", 30, Text, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(540, 190));
-            menus.victoryStats.gameObject.AddComponent<LayoutElement>().preferredHeight = 190;
-            menus.beginAgainButton = MakeButton(victory, "Begin Again");
-            menus.victoryMenuButton = MakeButton(victory, "Main Menu");
+            // The ending panel, shown after the loop back to the forest
+            var ending = Panel(canvas, "EndingPanel", GameInfo.Title, Gold, "The cycle begins again.", 680);
+            menus.endingPanel = ending.transform.parent.parent.gameObject;
+            menus.endingStats = Label(ending, "Stats", "", 30, Text, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(540, 190));
+            menus.endingStats.gameObject.AddComponent<LayoutElement>().preferredHeight = 190;
+            menus.beginAgainButton = MakeButton(ending, "Begin Again");
+            menus.endingMenuButton = MakeButton(ending, "Main Menu");
 
             // Saved hidden so the scene view stays clean; HUD/GameMenus also hide them at runtime.
             menus.pausePanel.SetActive(false);
             menus.deathPanel.SetActive(false);
-            menus.victoryPanel.SetActive(false);
+            menus.endingPanel.SetActive(false);
             hud.bossBarRoot.SetActive(false);
             hud.titleGroup.alpha = 0f;
             hud.messageGroup.alpha = 0f;

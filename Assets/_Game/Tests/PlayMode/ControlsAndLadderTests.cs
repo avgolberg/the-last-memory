@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace TileVania.Tests
+namespace LastMemory.Tests
 {
     /// <summary>
     /// Iteration 2 coverage: context-sensitive keyboard controls, ladders in both directions,

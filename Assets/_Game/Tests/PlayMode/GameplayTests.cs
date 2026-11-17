@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
-namespace TileVania.Tests
+namespace LastMemory.Tests
 {
     /// <summary>
     /// End-to-end gameplay checks that load the real scenes and drive the player with simulated input.
@@ -265,7 +265,7 @@ namespace TileVania.Tests
         }
 
         [UnityTest]
-        public IEnumerator Boss_FightStarts_DiesAndRevealsTreasure_Victory()
+        public IEnumerator Boss_FightStarts_Dies_AndTheChestStartsTheEnding()
         {
             yield return Load(SceneLoader.Boss);
             var boss = Object.FindFirstObjectByType<DragonBoss>();
@@ -291,7 +291,7 @@ namespace TileVania.Tests
                 for (float t = 0; t < 60f && !(SceneManager.GetActiveScene().name == SceneLoader.Level1 && GameMenus.EndingVisible); t += Time.unscaledDeltaTime)
                     yield return null;
                 Assert.AreEqual(SceneLoader.Level1, SceneManager.GetActiveScene().name, "the ending returns to the forest");
-                Assert.IsNotNull(GameObject.Find("VictoryPanel"), "the ending panel follows the loop");
+                Assert.IsNotNull(GameObject.Find("EndingPanel"), "the ending panel follows the loop");
             }
             finally
             {

@@ -82,7 +82,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f53b3c70bdc6ed44085ee2ffc1d07064, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.KeyPickup
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.KeyPickup
   sound: 5
   sparkleColor: {r: 0.5, g: 0.7, b: 1, a: 1}
   magnetToPlayer: 0
@@ -190,7 +190,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2089f6500a330649811e5fede739795, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Bobbing
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Bobbing
   amplitude: {x: 0, y: 0.12}
   frequency: 0.8
   randomPhase: 1

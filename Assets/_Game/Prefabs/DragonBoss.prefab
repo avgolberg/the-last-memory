@@ -121,7 +121,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3a49aee81d6f684f99254f98e9043be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.ContactDamage
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.ContactDamage
   damage: 1
   active: 1
 --- !u!114 &7533605714979768979
@@ -135,7 +135,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 03d45d65426d8c849b8c9ab6dd2d39aa, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.DragonBoss
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.DragonBoss
   displayName: The Keeper
   maxHealth: 30
   bossMusic: {fileID: 8300000, guid: def6df96cad83c449af7417ed51102c1, type: 3}
@@ -255,7 +255,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44b20362683400949ba621f30370f72f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.SpriteFrameAnimator
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.SpriteFrameAnimator
   frames:
   - {fileID: 21300000, guid: 9f338e3c84a486d449d464162efe0181, type: 3}
   - {fileID: 21300000, guid: c8f73940f21abcc45af6df77f45edf98, type: 3}

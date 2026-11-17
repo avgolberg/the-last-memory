@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Platformer movement: acceleration-based running, buffered/coyote jumps with variable height,

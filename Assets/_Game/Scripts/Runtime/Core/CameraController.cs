@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Smooth platformer camera: follows the target with look-ahead, stays inside level bounds,

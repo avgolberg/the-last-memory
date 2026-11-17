@@ -149,6 +149,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3a49aee81d6f684f99254f98e9043be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.ContactDamage
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.ContactDamage
   damage: 1
   active: 1

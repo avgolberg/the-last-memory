@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// An optional memory fragment: a pale glowing shard. Picking it up is worth a few gems and briefly

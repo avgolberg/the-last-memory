@@ -6,7 +6,7 @@ using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>Project settings, materials, animation assets, gameplay prefabs and the SFX library.</summary>
     public static class ContentBuilder
@@ -351,13 +351,12 @@ namespace TileVania.EditorTools
                 var go = new GameObject("ExitPortal") { layer = Layers.Interactables };
                 var open = Enumerable.Range(0, 17).Select(i => ArtSetup.GetSprite("Portals/Portal_Open.png", "PortalOpen_" + i.ToString("00"))).ToArray();
                 var loop = ArtSetup.Frames("Portals/Portal_Loop.png", "PortalLoop", 5);
-                var sr = AddSprite(go, open[0], "Interactables", 0, unlit: true);
+                AddSprite(go, open[0], "Interactables", 0, unlit: true);
                 var anim = Animate(go, new[] { open[0] }, 1f);
                 anim.randomStartFrame = false;
                 var c = go.AddComponent<BoxCollider2D>(); c.isTrigger = true; c.size = new Vector2(1.0f, 1.6f); c.offset = new Vector2(0f, 0.9f);
                 var exit = go.AddComponent<LevelExit>(); exit.animator = anim; exit.openFrames = open; exit.loopFrames = loop;
                 AddPointLight(Child(go, "Glow", new Vector3(0f, 1f, 0f)), new Color(0.4f, 1f, 0.5f), 4f, 0.9f).gameObject.AddComponent<LightFlicker>();
-                _ = sr;
                 Save<Transform>(go, "ExitPortal");
             }
 
@@ -370,9 +369,8 @@ namespace TileVania.EditorTools
             {
                 var go = new GameObject("Torch");
                 AddSprite(go, ArtSetup.GetSprite("Environment/Castle/Castle_Tiles.png", "Castle_Torch"), "Background", 60, unlit: true);
-                var l = AddPointLight(go, new Color(1f, 0.6f, 0.3f), 7f, 1.5f);
+                AddPointLight(go, new Color(1f, 0.6f, 0.3f), 7f, 1.5f);
                 go.AddComponent<LightFlicker>();
-                _ = l;
                 Save<Transform>(go, "Torch");
             }
 
@@ -396,7 +394,7 @@ namespace TileVania.EditorTools
             col.radius = radius / Mathf.Max(scale.x, 0.01f);
             var p = go.AddComponent<Projectile>();
             p.speed = speed; p.lifetime = lifetime; p.impactColor = impact; p.rotateToDirection = rotate;
-            if (!rotate) { var glow = AddPointLight(Child(go, "Glow"), impact, 2f, 0.7f); _ = glow; }
+            if (!rotate) AddPointLight(Child(go, "Glow"), impact, 2f, 0.7f);
             return Save<Projectile>(go, name);
         }
 

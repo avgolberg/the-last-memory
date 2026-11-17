@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     public enum DialogueMode
     {

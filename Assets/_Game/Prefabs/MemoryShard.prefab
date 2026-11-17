@@ -102,7 +102,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2089f6500a330649811e5fede739795, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Bobbing
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Bobbing
   amplitude: {x: 0, y: 0.12}
   frequency: 0.8
   randomPhase: 1
@@ -189,7 +189,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 938cec68bbb44f559f8c34a698636c5e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.MemoryShard
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.MemoryShard
   sound: 5
   sparkleColor: {r: 0.85, g: 0.8, b: 1, a: 1}
   magnetToPlayer: 0
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbecf8f66af245cfa7fd06f947309039, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Glint
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Glint
   color: {r: 0.9, g: 0.85, b: 1, a: 1}
   interval: 1.3
   offset: {x: 0, y: 0}
@@ -306,6 +306,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04cd9179830c782458a24212d18290cc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.LightFlicker
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.LightFlicker
   amount: 0.15
   speed: 6

@@ -1,4 +1,4 @@
-namespace TileVania
+namespace LastMemory
 {
     public class Gem : Pickup
     {

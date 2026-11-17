@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Three hearts, knockback, invulnerability blinking, and the death sequence.</summary>
     [RequireComponent(typeof(PlayerController))]

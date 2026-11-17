@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// A story beat placed in a level (digits 1-9 in the ASCII layouts). Depending on the beat it plays when the

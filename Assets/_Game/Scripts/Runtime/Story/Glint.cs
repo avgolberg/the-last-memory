@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>A small periodic sparkle that draws the eye to something worth examining.</summary>
     public class Glint : MonoBehaviour

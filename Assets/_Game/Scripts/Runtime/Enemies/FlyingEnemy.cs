@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Flies back and forth along a horizontal path with a wavy vertical motion.</summary>
     public class FlyingEnemy : MonoBehaviour

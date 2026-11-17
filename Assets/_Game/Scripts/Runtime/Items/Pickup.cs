@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Base for collectibles. Detects the player by component (not by tag) and collects only once,

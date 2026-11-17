@@ -122,7 +122,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a60327465fa32b343bbda7f7a6d8c516, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.EnemyHealth
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.EnemyHealth
   maxHealth: 2
   spriteRenderer: {fileID: 3026406818082188710}
   deathColor: {r: 0.9, g: 0.9, b: 0.9, a: 1}
@@ -138,7 +138,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3a49aee81d6f684f99254f98e9043be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.ContactDamage
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.ContactDamage
   damage: 1
   active: 1
 --- !u!114 &2299905571130269253
@@ -152,7 +152,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e0a8500db331bb844a7e79684a9a8826, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.ShooterEnemy
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.ShooterEnemy
   projectilePrefab: {fileID: 5728581167018670930, guid: 79f31cad0f498b14a85e65b19a1650c7, type: 3}
   range: 9
   cooldown: 2.4
@@ -172,7 +172,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2089f6500a330649811e5fede739795, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Bobbing
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Bobbing
   amplitude: {x: 0, y: 0.25}
   frequency: 0.5
   randomPhase: 1
@@ -278,7 +278,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44b20362683400949ba621f30370f72f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.SpriteFrameAnimator
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.SpriteFrameAnimator
   frames:
   - {fileID: 516351111, guid: 4c5a2664d0fd9fe43b2408fb15feab1b, type: 3}
   - {fileID: -1608808051, guid: 4c5a2664d0fd9fe43b2408fb15feab1b, type: 3}

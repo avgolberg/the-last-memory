@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TileVania
+namespace LastMemory
 {
     public enum LineStyle { Speech, Thought, Note, Voice, Memory }
 

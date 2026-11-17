@@ -105,7 +105,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44b20362683400949ba621f30370f72f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.SpriteFrameAnimator
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.SpriteFrameAnimator
   frames:
   - {fileID: -858446039, guid: 5260b1c7db649f744861760f39792ef6, type: 3}
   fps: 1
@@ -168,7 +168,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 37e4c19c0b98adc4ba2055b29004872e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.LevelExit
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.LevelExit
   animator: {fileID: 7569213593734116939}
   openFrames:
   - {fileID: -858446039, guid: 5260b1c7db649f744861760f39792ef6, type: 3}
@@ -291,6 +291,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04cd9179830c782458a24212d18290cc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.LightFlicker
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.LightFlicker
   amount: 0.15
   speed: 6

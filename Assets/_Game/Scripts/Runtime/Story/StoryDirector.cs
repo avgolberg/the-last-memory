@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Runs the story cutscenes with the existing gameplay objects (no timeline):

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Draws a silk thread from an anchor point down to a bobbing spider.</summary>
     public class HangingThread : MonoBehaviour

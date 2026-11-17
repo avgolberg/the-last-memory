@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Opens when the player touches it and showers out gems (and optionally a heal).</summary>
     public class TreasureChest : MonoBehaviour

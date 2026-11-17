@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Gameplay input built in code on top of the Input System, so no scene wiring is needed.
