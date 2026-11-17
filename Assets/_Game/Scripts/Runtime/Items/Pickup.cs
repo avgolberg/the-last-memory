@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Base for collectibles. Detects the player by component (not by tag) and collects only once,
@@ -49,7 +49,7 @@ namespace TileVania
         void OnTriggerEnter2D(Collider2D other)
         {
             if (collected || (magnetToPlayer && magnetDelay > 0f)) return;
-            var player = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var player = PlayerController.FromCollider(other);
             if (player == null) return;
             var health = player.GetComponent<PlayerHealth>();
             if (health != null && health.IsDead) return;

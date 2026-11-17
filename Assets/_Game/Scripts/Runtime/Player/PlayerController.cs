@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Platformer movement: acceleration-based running, buffered/coyote jumps with variable height,
@@ -65,6 +65,20 @@ namespace TileVania
         public bool ControlEnabled { get; private set; } = true;
         public Rigidbody2D Body => rb;
 
+        /// <summary>Cutscenes walk the hero with this (-1..1) while player control is off.</summary>
+        public float ScriptedMoveX { get; set; }
+
+        /// <summary>
+        /// Returns the player if <paramref name="other"/> belongs to the hero, otherwise null. Triggers use this to
+        /// recognise the player by component instead of by tag. (The hero's colliders sit on the same object as its
+        /// Rigidbody2D, so the rigidbody tells us who owns the collider.)
+        /// </summary>
+        public static PlayerController FromCollider(Collider2D other)
+        {
+            if (other.attachedRigidbody == null) return null;
+            return other.attachedRigidbody.GetComponent<PlayerController>();
+        }
+
         void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
@@ -76,6 +90,7 @@ namespace TileVania
         public void SetControl(bool enabled)
         {
             ControlEnabled = enabled;
+            ScriptedMoveX = 0f;
             if (!enabled)
             {
                 input = Vector2.zero;
@@ -121,8 +136,9 @@ namespace TileVania
             }
             else
             {
-                input = Vector2.zero;
+                input = new Vector2(ScriptedMoveX, 0f);
                 jumpHeld = false;
+                if (Mathf.Abs(ScriptedMoveX) > 0.01f) SetFacing((int)Mathf.Sign(ScriptedMoveX));
             }
 
             UpdateVisual(dt);
@@ -133,6 +149,7 @@ namespace TileVania
         ///  - Up arrow on a ladder climbs instead of jumping.
         ///  - Up arrow elsewhere jumps after a tiny grace period; pressing X in that window
         ///    (Up + X) fires upward and cancels the jump.
+        ///  - C always fires straight up and never changes movement (no timing needed).
         ///  - Z / Space always jump immediately (Down + Z / Space drops through one-way ledges).
         /// </summary>
         void ReadActions()
@@ -144,7 +161,11 @@ namespace TileVania
                 else pendingUpJump = Time.time;
             }
 
-            if (GameInput.ShootPressed)
+            if (GameInput.ShootUpPressed)
+            {
+                TryShoot(aimUp: true);
+            }
+            else if (GameInput.ShootPressed)
             {
                 bool aimUp = input.y > 0.5f;
                 if (aimUp && pendingUpJump >= 0f) pendingUpJump = -1f; // Up + X: aim, do not jump
@@ -193,13 +214,16 @@ namespace TileVania
             {
                 float target = input.x * moveSpeed;
                 bool accelerating = Mathf.Abs(target) > 0.01f;
-                float rate = IsGrounded
-                    ? (accelerating ? groundAcceleration : groundDeceleration)
-                    : (accelerating ? airAcceleration : airDeceleration);
+                // Speed up / slow down more sharply on the ground than in the air.
+                float rate;
+                if (IsGrounded) rate = accelerating ? groundAcceleration : groundDeceleration;
+                else rate = accelerating ? airAcceleration : airDeceleration;
                 v.x = Mathf.MoveTowards(v.x, target, rate * dt);
             }
 
             // Jump (buffered + coyote time); Down + Jump on a one-way platform drops through it
+            // buffered: the key was pressed recently (it may have been just before landing).
+            // canJump: the hero was on the ground when the key was pressed, or left it at most coyoteTime earlier.
             bool buffered = Time.time - lastJumpPressedTime <= jumpBufferTime;
             bool canJump = lastGroundedTime >= jumpOriginTime - coyoteTime;
             if (buffered && canJump && ControlEnabled)
@@ -288,9 +312,15 @@ namespace TileVania
             if (!IsClimbing)
             {
                 if (knockbackTimer > 0f) return;
-                // Down: from the top of a ladder (standing on it) or while overlapping one.
-                bool down = input.y < -0.5f && (IsGrounded ? FindLadderColumn(FeetProbe(), out _, FeetProbeHeight) : FindLadderColumn(BodyProbe(), out _));
-                // Holding Up / stick-up while overlapping a ladder (e.g. jumping onto it) grabs it.
+                // Down: on the ground, look for a ladder below the feet (standing on top of it);
+                // in the air, look for a ladder the body overlaps.
+                bool down = false;
+                if (input.y < -0.5f)
+                {
+                    if (IsGrounded) down = FindLadderColumn(FeetProbe(), out _, FeetProbeHeight);
+                    else down = FindLadderColumn(BodyProbe(), out _);
+                }
+                // Up: holding Up while overlapping a ladder (e.g. after jumping onto it) grabs it.
                 bool up = input.y > 0.5f && FindLadderColumn(BodyProbe(), out _);
                 if (down || up) StartClimbing();
                 return;
@@ -348,20 +378,31 @@ namespace TileVania
             if (shootTimer > 0f || IsClimbing || projectilePrefab == null) return;
             shootTimer = shootCooldown;
             attackAnimTimer = 0.25f;
-            // Up + X shoots straight up (useful against flying enemies and the boss).
-            bool up = aimUp;
-            Vector2 dir = up ? Vector2.up : new Vector2(Facing, 0f);
-            Vector2 origin = (Vector2)transform.position + new Vector2(0f, up ? 1.2f : muzzleOffset.y);
-            Vector2 spawn = up ? origin + Vector2.up * 0.5f : origin + new Vector2(muzzleOffset.x * Facing, 0f);
+            // origin: a point inside the hero's body; spawn: where the projectile appears.
+            Vector2 direction, origin, spawn;
+            if (aimUp)
+            {
+                // C (or Up + X): straight up from above the head (useful against bats and the boss).
+                direction = Vector2.up;
+                origin = (Vector2)transform.position + new Vector2(0f, 1.2f);
+                spawn = origin + Vector2.up * 0.5f;
+            }
+            else
+            {
+                direction = new Vector2(Facing, 0f);
+                origin = (Vector2)transform.position + new Vector2(0f, muzzleOffset.y);
+                spawn = origin + new Vector2(muzzleOffset.x * Facing, 0f);
+            }
             AudioManager.Play(Sfx.Shoot);
+
             // Never spawn inside a wall (or behind it): just show a spark when point-blank against one.
             if (Physics2D.Linecast(origin, spawn, Layers.SolidMask))
             {
-                Fx.Burst(origin + dir * 0.3f, new Color(0.8f, 0.9f, 1f), 5, 2.5f, 0.2f, 0f, 1.5f);
+                Fx.Burst(origin + direction * 0.3f, new Color(0.8f, 0.9f, 1f), 5, 2.5f, 0.2f, 0f, 1.5f);
                 return;
             }
-            var p = Instantiate(projectilePrefab, spawn, Quaternion.identity);
-            p.Launch(dir);
+            var projectile = Instantiate(projectilePrefab, spawn, Quaternion.identity);
+            projectile.Launch(direction);
         }
 
         void OnJumped()
@@ -385,16 +426,25 @@ namespace TileVania
             visual.localScale = new Vector3(Facing * squash.x, squash.y, 1f);
             if (animator == null) return;
 
+            // Pick the animation from the hero's state, most important first.
             int state;
             var v = rb.linearVelocity;
             if (hurtAnimTimer > 0f) state = HurtState;
             else if (IsClimbing) state = ClimbState;
             else if (attackAnimTimer > 0f) state = AttackState;
             else if (!IsGrounded)
-                state = v.y > 3f ? JumpState : (v.y > -3f ? ApexState : FallState);
-            else state = Mathf.Abs(v.x) > 0.5f ? RunState : IdleState;
+            {
+                // In the air: rising fast, near the top of the jump, or falling.
+                if (v.y > 3f) state = JumpState;
+                else if (v.y > -3f) state = ApexState;
+                else state = FallState;
+            }
+            else if (Mathf.Abs(v.x) > 0.5f) state = RunState;
+            else state = IdleState;
 
-            animator.speed = state == ClimbState ? (Mathf.Abs(v.y) > 0.1f ? 1f : 0f) : 1f;
+            // The climbing animation pauses while the hero holds still on a ladder.
+            bool holdingStillOnLadder = state == ClimbState && Mathf.Abs(v.y) <= 0.1f;
+            animator.speed = holdingStillOnLadder ? 0f : 1f;
             if (state != currentAnim)
             {
                 currentAnim = state;

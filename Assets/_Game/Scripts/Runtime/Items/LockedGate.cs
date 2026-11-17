@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// A solid gate that opens when the player touches it while holding the matching key.
@@ -22,7 +22,7 @@ namespace TileVania
         void OnTriggerStay2D(Collider2D other)
         {
             if (open) return;
-            var player = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var player = PlayerController.FromCollider(other);
             if (player == null) return;
             var session = GameSession.Instance;
             if (session.HasKey(requiredKey))

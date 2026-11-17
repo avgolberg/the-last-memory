@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Portal to the next scene. Only the player can trigger it (projectiles never reach this layer),
@@ -46,7 +46,7 @@ namespace TileVania
         void OnTriggerEnter2D(Collider2D other)
         {
             if (used) return;
-            var pc = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var pc = PlayerController.FromCollider(other);
             if (pc == null || pc.GetComponent<PlayerHealth>().IsDead) return;
             used = true;
             StartCoroutine(Enter(pc));

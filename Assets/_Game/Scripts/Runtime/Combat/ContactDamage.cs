@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Hurts the player while touching this trigger (spikes, enemy bodies, the boss).</summary>
     public class ContactDamage : MonoBehaviour

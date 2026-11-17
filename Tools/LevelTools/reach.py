@@ -1,4 +1,4 @@
-"""Conservative reachability check for TileVania ASCII layouts.
+"""Conservative reachability check for the ASCII level layouts of The Last Memory.
 Player: 2 cells tall, jump <= 3 up / 4 across (actual: ~3.5 up, ~5 across)."""
 import sys
 from collections import deque
@@ -85,7 +85,10 @@ def analyse(path, keys_order):
         pass
     unreached = [p for p, c in g.items() if c in 'g$ch' and not near(cells, p)]
     print("  unreachable pickups/chests:", unreached or 'none')
-    return ok
+    story = sorted((c, p) for p, c in g.items() if c.isdigit())
+    lost = [(c, p) for c, p in story if not near(cells, p)]
+    if story: print("  story markers:", ', '.join(f"{c}@{p}" for c, p in story), '| unreachable:', lost or 'none')
+    return ok and not lost
 
 ok = True
 base = sys.argv[1]

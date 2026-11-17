@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     public struct DamageInfo
     {

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Plays UI sounds when a button is highlighted or pressed.</summary>
     [RequireComponent(typeof(Button))]

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Bottomless pits: costs a heart and returns the player to the last checkpoint.</summary>
     public class KillZone : MonoBehaviour

@@ -111,7 +111,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 20bf83e01beb76044971d7d8cad1f21c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.PlayerController
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.PlayerController
   moveSpeed: 7.5
   groundAcceleration: 90
   groundDeceleration: 100
@@ -142,7 +142,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c9ac1bec93627d4b938cd1ec098f71b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.PlayerHealth
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.PlayerHealth
   maxHearts: 3
   invulnerabilityTime: 1.2
   knockback: {x: 7, y: 9}

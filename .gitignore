@@ -25,3 +25,6 @@ UserSettings/
 
 Assets/_Recovery/
 Assets/*Recovery*
+# Python bytecode
+__pycache__/
+*.pyc

@@ -45,7 +45,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c4b3c093b73d234babf5bc5d93363a4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.HangingThread
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.HangingThread
   spider: {fileID: 2249614804804955647}
   thread: {fileID: 3659949327691436001}
   anchorY: 0
@@ -170,7 +170,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a60327465fa32b343bbda7f7a6d8c516, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.EnemyHealth
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.EnemyHealth
   maxHealth: 2
   spriteRenderer: {fileID: 6285730292938637189}
   deathColor: {r: 0.9, g: 0.8, b: 0.3, a: 1}
@@ -186,7 +186,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3a49aee81d6f684f99254f98e9043be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.ContactDamage
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.ContactDamage
   damage: 1
   active: 1
 --- !u!114 &2358727621548407750
@@ -200,7 +200,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2089f6500a330649811e5fede739795, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Bobbing
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Bobbing
   amplitude: {x: 0, y: 1}
   frequency: 0.3
   randomPhase: 1
@@ -396,7 +396,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44b20362683400949ba621f30370f72f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.SpriteFrameAnimator
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.SpriteFrameAnimator
   frames:
   - {fileID: 1578521025, guid: 38e1f560fb0e4d24bb70fdb5ae49492d, type: 3}
   - {fileID: 515754196, guid: 38e1f560fb0e4d24bb70fdb5ae49492d, type: 3}

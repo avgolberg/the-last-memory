@@ -102,7 +102,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44b20362683400949ba621f30370f72f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.SpriteFrameAnimator
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.SpriteFrameAnimator
   frames:
   - {fileID: -2007687749, guid: 52afc2c6230488a438849fad218937cf, type: 3}
   - {fileID: -2075819254, guid: 52afc2c6230488a438849fad218937cf, type: 3}
@@ -231,7 +231,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a60327465fa32b343bbda7f7a6d8c516, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.EnemyHealth
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.EnemyHealth
   maxHealth: 2
   spriteRenderer: {fileID: 189832846565203560}
   deathColor: {r: 1, g: 0.6, b: 0.8, a: 1}
@@ -247,6 +247,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3a49aee81d6f684f99254f98e9043be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.ContactDamage
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.ContactDamage
   damage: 1
   active: 1

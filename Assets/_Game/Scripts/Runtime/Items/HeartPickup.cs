@@ -1,4 +1,4 @@
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Restores one heart. Stays in the world if the player is already at full health.</summary>
     public class HeartPickup : Pickup

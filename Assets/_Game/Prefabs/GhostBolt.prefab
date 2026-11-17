@@ -252,7 +252,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d8229a704149e4a4b9abb72784aa53ae, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Projectile
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Projectile
   damage: 1
   speed: 6.5
   lifetime: 4

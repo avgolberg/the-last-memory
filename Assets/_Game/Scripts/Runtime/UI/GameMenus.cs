@@ -3,18 +3,20 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
-    /// <summary>In-level pause, death and victory screens.</summary>
+    /// <summary>In-level pause, death and ending ("The Last Memory") screens.</summary>
     public class GameMenus : MonoBehaviour
     {
         static GameMenus instance;
 
-        public GameObject pausePanel, deathPanel, victoryPanel;
+        public GameObject pausePanel, deathPanel, endingPanel;
         public Button resumeButton, restartButton, pauseMenuButton;
         public Button retryButton, deathMenuButton;
-        public Button victoryMenuButton;
-        public TMP_Text victoryStats;
+        public Button endingMenuButton;
+        [Tooltip("Ending panel: keep playing the new cycle from the forest.")]
+        public Button beginAgainButton;
+        public TMP_Text endingStats;
 
         public static bool IsPaused => instance != null && instance.pausePanel != null && instance.pausePanel.activeSelf;
 
@@ -27,13 +29,16 @@ namespace TileVania
             pauseMenuButton.onClick.AddListener(() => { Resume(); LevelManager.Instance.QuitToMenu(); });
             retryButton.onClick.AddListener(() => LevelManager.Instance.Retry());
             deathMenuButton.onClick.AddListener(() => LevelManager.Instance.QuitToMenu());
-            victoryMenuButton.onClick.AddListener(() => LevelManager.Instance.QuitToMenu());
+            endingMenuButton.onClick.AddListener(() => LevelManager.Instance.QuitToMenu());
+            if (beginAgainButton != null) beginAgainButton.onClick.AddListener(() => LevelManager.Instance.BeginAgain());
         }
 
         void Update()
         {
             if (!GameInput.PausePressed || SceneLoader.IsLoading) return;
-            if (deathPanel.activeSelf || victoryPanel.activeSelf) return;
+            if (deathPanel.activeSelf || endingPanel.activeSelf) return;
+            // Dialogue and cutscenes can't be paused: they own the time scale and the player.
+            if (DialogueBox.IsBlocking || DialogueBox.IsCinematic || StoryDirector.InCutscene) return;
             if (pausePanel.activeSelf) Resume(); else Pause();
         }
 
@@ -60,7 +65,7 @@ namespace TileVania
         {
             pausePanel.SetActive(false);
             deathPanel.SetActive(false);
-            victoryPanel.SetActive(false);
+            endingPanel.SetActive(false);
         }
 
         public static void HideAll()
@@ -77,14 +82,19 @@ namespace TileVania
             Select(instance.retryButton);
         }
 
-        public static void ShowVictory()
+        public static bool EndingVisible => instance != null && instance.endingPanel != null && instance.endingPanel.activeSelf;
+
+        /// <summary>The ending panel, shown after the loop back to the forest.</summary>
+        public static void ShowEnding(Story.CycleSummary s)
         {
             if (instance == null) return;
-            var s = GameSession.Instance;
-            instance.victoryStats.text =
-                $"Gems collected: {s.Gems}\nTime: {GameSession.FormatTime(s.PlayTime)}\nDeaths: {s.Deaths}";
-            instance.victoryPanel.SetActive(true);
-            Select(instance.victoryMenuButton);
+            instance.endingStats.text =
+                $"Gems gathered: {s.gems}\n" +
+                $"Memories glimpsed: {s.memories} of {Story.TotalMemories}\n" +
+                $"Time: {GameSession.FormatTime(s.time)}    Deaths: {s.deaths}\n" +
+                $"Notches on the tree: {s.notches}";
+            instance.endingPanel.SetActive(true);
+            Select(instance.beginAgainButton != null ? instance.beginAgainButton : instance.endingMenuButton);
         }
 
         void OnDestroy()

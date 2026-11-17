@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Opens when the player touches it and showers out gems (and optionally a heal).</summary>
     public class TreasureChest : MonoBehaviour
@@ -22,7 +22,7 @@ namespace TileVania
         void OnTriggerEnter2D(Collider2D other)
         {
             if (opened) return;
-            var player = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var player = PlayerController.FromCollider(other);
             if (player == null) return;
             if (player.GetComponent<PlayerHealth>().IsDead) return;
             opened = true;
@@ -41,6 +41,16 @@ namespace TileVania
             Fx.Burst(transform.position + Vector3.up * 0.6f, new Color(1f, 0.85f, 0.3f), 20, 5f, 0.6f);
             if (glow != null) glow.intensity *= 2f;
 
+            // The Keeper's chest holds the last memory, not gold: the story director takes over.
+            // (Every level scene has a StoryDirector; the scene validator checks this.)
+            if (isFinalTreasure)
+            {
+                if (StoryDirector.Instance == null) { Debug.LogError("The final chest needs a StoryDirector in the scene.", this); yield break; }
+                Opened?.Invoke();
+                StoryDirector.Instance.PlayEnding(this);
+                yield break;
+            }
+
             if (healAmount > 0) player.GetComponent<PlayerHealth>().Heal(healAmount);
             for (int i = 0; i < gemCount && gemPrefab != null; i++)
             {
@@ -48,13 +58,7 @@ namespace TileVania
                 g.magnetToPlayer = true;
                 yield return new WaitForSeconds(0.06f);
             }
-            if (isFinalTreasure)
-            {
-                HUD.ShowMessage("The Guardian's treasure is yours!");
-                yield return new WaitForSeconds(1.5f);
-            }
             Opened?.Invoke();
-            if (isFinalTreasure && LevelManager.Instance != null) LevelManager.Instance.Victory();
         }
     }
 }

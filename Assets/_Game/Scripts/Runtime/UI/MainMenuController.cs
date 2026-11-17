@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace TileVania
+namespace LastMemory
 {
     public class MainMenuController : MonoBehaviour
     {
@@ -49,6 +49,7 @@ namespace TileVania
         void Play()
         {
             GameSession.StartNewRun();
+            Story.BeginNewCycle(Story.Opening.FirstWaking);
             SceneLoader.Load(SceneLoader.Level1);
         }
 

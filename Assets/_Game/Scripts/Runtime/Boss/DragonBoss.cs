@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
-    /// Guardian of the Treasure: a dragon with three telegraphed attacks.
+    /// The Keeper: a dragon with three telegraphed attacks. It guards the last memory because the hero once
+    /// made it promise to (Docs/STORY_SPEC.md); it speaks before the fight and after its defeat.
     ///  - Fire Volley: glows and shakes, then fires a fan of fireballs at the player.
     ///  - Dive Slam: marks the floor under the player, then slams down (vulnerable afterwards).
     ///  - Fire Rain: marks several floor columns, then fire falls on them.
@@ -13,7 +14,7 @@ namespace TileVania
     /// </summary>
     public class DragonBoss : MonoBehaviour, IDamageable
     {
-        public string displayName = "Guardian of the Treasure";
+        public string displayName = "The Keeper";
         public int maxHealth = 30;
         public AudioClip bossMusic;
 
@@ -99,12 +100,13 @@ namespace TileVania
 
         IEnumerator FightLoop()
         {
-            // Intro: swoop in and roar
+            // Intro: swoop in, then speak (once per cycle; the world is frozen while it talks)
             yield return MoveTo(new Vector3((arenaLeft + arenaRight) * 0.5f, floorY + 8f), 1.4f);
+            if (Story.TryBegin("boss_intro")) yield return DialogueBox.Run(StoryScript.BossIntro, DialogueMode.Blocking);
+            else DialogueBox.Play(StoryScript.BossRetry, DialogueMode.Bark);
             SetVulnerable(true);
             AudioManager.Play(Sfx.BossWarning);
             CameraController.Shake(0.35f, 0.8f);
-            HUD.ShowMessage("The Guardian awakens!");
             yield return Flash(new Color(1f, 0.5f, 0.3f), 0.8f);
 
             while (fighting && !dead)
@@ -124,8 +126,11 @@ namespace TileVania
 
         IEnumerator FireVolley()
         {
-            float side = player != null && player.position.x > (arenaLeft + arenaRight) * 0.5f ? arenaLeft + 2.5f : arenaRight - 2.5f;
-            // level with the side platforms so the player can hit it with straight shots
+            // Fly to the wall opposite the hero, level with the side platforms
+            // so the player can hit it with straight shots.
+            float side = arenaRight - 2.5f;
+            bool heroOnRightHalf = player != null && player.position.x > (arenaLeft + arenaRight) * 0.5f;
+            if (heroOnRightHalf) side = arenaLeft + 2.5f;
             yield return MoveTo(new Vector3(side, floorY + 3.2f), 0.9f);
             int volleys = enraged ? 2 : 1;
             for (int v = 0; v < volleys; v++)
@@ -249,9 +254,7 @@ namespace TileVania
 
         void FacePlayer()
         {
-            if (player == null || spriteRenderer == null) return;
-            bool playerRight = player.position.x > transform.position.x;
-            spriteRenderer.flipX = spriteFacesRight ? !playerRight : playerRight;
+            if (player != null) FaceTowards(player.position.x);
         }
 
         Vector2 Mouth()
@@ -298,7 +301,7 @@ namespace TileVania
             {
                 enraged = true;
                 baseColor = new Color(1f, 0.75f, 0.75f);
-                HUD.ShowMessage("The Guardian is enraged!");
+                HUD.ShowMessage("The Keeper is enraged!");
                 CameraController.Shake(0.3f, 0.5f);
             }
             if (health <= 0) StartCoroutine(Die());
@@ -335,21 +338,46 @@ namespace TileVania
                 if (spriteRenderer) spriteRenderer.color = i % 2 == 0 ? Color.white : new Color(1f, 0.4f, 0.4f);
                 yield return new WaitForSeconds(0.15f);
             }
+            if (spriteRenderer) spriteRenderer.color = new Color(1f, 0.85f, 0.85f);
+            // Its last words (only if it spoke before the fight: beats never play out of order)
+            if (Story.TryBegin("boss_defeat", "boss_intro")) yield return DialogueBox.Run(StoryScript.BossDefeat, DialogueMode.Blocking);
+
+            // It sinks to the floor at the side of the hall, wounded, and stays: it is still the Keeper of the memory,
+            // and the ending needs it (StoryDirector).
             Vector3 from = transform.position;
-            for (float t = 0; t < 1f; t += Time.deltaTime / 1.2f)
+            Color fromColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+            for (float t = 0; t < 1f; t += Time.deltaTime / 1.4f)
             {
-                transform.position = from + Vector3.down * (t * t * 4f);
-                if (spriteRenderer) spriteRenderer.color = new Color(1f, 1f, 1f, 1f - t);
+                transform.position = Vector3.Lerp(from, RestPosition, Mathf.SmoothStep(0f, 1f, t));
+                if (spriteRenderer) spriteRenderer.color = Color.Lerp(fromColor, WoundedTint, t);
                 yield return null;
             }
+            transform.position = RestPosition;
+            if (spriteRenderer) spriteRenderer.color = WoundedTint;
+            var wings = visual != null ? visual.GetComponent<SpriteFrameAnimator>() : null;
+            if (wings != null) wings.fps = 1f; // tired, slow wingbeats
+            AudioManager.Play(Sfx.RockImpact, 0.5f);
+            CameraController.Shake(0.2f, 0.3f);
             if (treasure != null)
             {
+                FaceTowards(treasure.transform.position.x);
                 treasure.gameObject.SetActive(true);
                 Fx.Burst(treasure.transform.position + Vector3.up * 0.6f, new Color(1f, 0.85f, 0.3f), 30, 6f, 0.8f);
                 AudioManager.Play(Sfx.Key);
-                HUD.ShowMessage("The treasure is revealed!");
             }
-            gameObject.SetActive(false);
+        }
+
+        /// <summary>Where the defeated Keeper rests: on the floor near the right wall of the hall.</summary>
+        public Vector3 RestPosition => new Vector3(arenaRight - 3.5f, floorY, 0f);
+
+        /// <summary>The Keeper's colour after its defeat (dim and grey).</summary>
+        public static readonly Color WoundedTint = new Color(0.55f, 0.5f, 0.6f);
+
+        public void FaceTowards(float x)
+        {
+            if (spriteRenderer == null) return;
+            bool right = x > transform.position.x;
+            spriteRenderer.flipX = spriteFacesRight ? !right : right;
         }
     }
 }

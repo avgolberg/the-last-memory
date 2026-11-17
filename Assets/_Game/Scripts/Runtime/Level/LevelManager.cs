@@ -2,11 +2,11 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Per-scene coordinator: level start (music, title), checkpoints, death and retry,
-    /// restart, completion and victory. Progression uses explicit scene names, never build-index wrapping.
+    /// restart and level completion. Progression uses explicit scene names, never build-index wrapping.
     /// </summary>
     public class LevelManager : MonoBehaviour
     {
@@ -39,8 +39,12 @@ namespace TileVania
         {
             GameSession.Instance.BeginLevel();
             AudioManager.PlayMusic(music);
-            HUD.ShowTitle(levelTitle, levelSubtitle);
+            // The forest's opening cutscene shows the title itself once the hero is on their feet.
+            var director = StoryDirector.Instance;
+            if (director == null || !director.TryHandleLevelStart()) ShowLevelTitle();
         }
+
+        public void ShowLevelTitle() => HUD.ShowTitle(levelTitle, levelSubtitle);
 
         public void SetCheckpoint(Checkpoint cp)
         {
@@ -68,12 +72,14 @@ namespace TileVania
 
         public void CompleteLevel() => SceneLoader.Load(nextScene);
 
-        public void Victory()
+        /// <summary>Ending panel → "Begin Again": the new cycle simply continues from the forest.</summary>
+        public void BeginAgain()
         {
-            GameSession.Instance.TimerRunning = false;
-            AudioManager.Play(Sfx.Victory);
-            if (player != null) player.SetControl(false);
-            GameMenus.ShowVictory();
+            GameMenus.HideAll();
+            GameSession.Instance.TimerRunning = true;
+            AudioManager.PlayMusic(music);
+            if (player != null) player.SetControl(true);
+            ShowLevelTitle();
         }
 
         public void QuitToMenu() => SceneLoader.Load(SceneLoader.MainMenu);

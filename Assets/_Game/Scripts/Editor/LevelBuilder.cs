@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -8,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>
     /// Turns an ASCII layout (Assets/_Game/Levels/*.txt) into a complete, editable scene:
@@ -76,8 +77,11 @@ namespace TileVania.EditorTools
             return t;
         }
 
-        static Sprite F(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
-        static Sprite C(string n) => ArtSetup.GetSprite("Environment/Castle/Castle_Tiles.png", "Castle_" + n);
+        // Tilemap tiles come from the extruded sheets (no seams); props from the original sheets.
+        static Sprite F(string n) => ArtSetup.ForestTile(n);
+        static Sprite C(string n) => ArtSetup.CastleTile(n);
+        static Sprite ForestProp(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
+        static Sprite CastleProp(string n) => ArtSetup.GetSprite("Environment/Castle/Castle_Tiles.png", "Castle_" + n);
 
         static Tilemap MakeTilemap(GameObject grid, string name, string sortingLayer, int order, int layer, Color color)
         {
@@ -217,6 +221,7 @@ namespace TileVania.EditorTools
             TreasureChest finalChest = null;
             Vector2 arenaTrigger = Vector2.zero, arenaDoor = Vector2.zero;
             bool hasArena = false, hasDoor = false;
+            TallyMarks treeMarks = null;
 
             for (int x = 0; x < L.w; x++)
                 for (int y = 0; y < L.h; y++)
@@ -256,23 +261,23 @@ namespace TileVania.EditorTools
                         case '^':
                         {
                             var spike = Place("Hazard_Spikes", feet, "Hazards");
-                            spike.GetComponent<SpriteRenderer>().sprite = F("Spike_" + rng.Next(3));
+                            spike.GetComponent<SpriteRenderer>().sprite = ForestProp("Spike_" + rng.Next(3));
                             break;
                         }
                         case 't': Place("Torch", c, "Lights"); break;
-                        case 'w': Deco("Window", C((x & 1) == 0 ? "WindowRound" : "WindowNarrow"), c, 45, backTint); break;
+                        case 'w': Deco("Window", CastleProp((x & 1) == 0 ? "WindowRound" : "WindowNarrow"), c, 45, backTint); break;
                         case ',':
                             if (castle) break;
                             if (rng.Next(3) == 0) Deco("Bush", ArtSetup.GetSprite("Environment/Forest/Forest_leaves.png", "Bush_Small"), feet + new Vector2(0, -0.1f), 45, Color.white);
                             else front.SetTile(new Vector3Int(x, y, 0), TileFor(F("Grass_" + rng.Next(2))));
                             break;
                         case '*': front.SetTile(new Vector3Int(x, y, 0), TileFor(F("Flower_" + rng.Next(2)))); break;
-                        case '|': Deco("Column", F("Column"), feet, 42, new Color(0.85f, 0.85f, 0.9f)); break;
+                        case '|': Deco("Column", ForestProp("Column"), feet, 42, new Color(0.85f, 0.85f, 0.9f)); break;
                         case 'A':
                             // ruined gateway: two broken columns flanking the entrance
-                            Deco("Column", F("Column"), new Vector2(x + 0.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
-                            Deco("Column", F("Column"), new Vector2(x + 3.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
-                            Deco("ColumnTop", F("ColumnShort"), new Vector2(x + 3.5f, y + 1.5f), 42, new Color(0.85f, 0.85f, 0.9f));
+                            Deco("Column", ForestProp("Column"), new Vector2(x + 0.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
+                            Deco("Column", ForestProp("Column"), new Vector2(x + 3.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
+                            Deco("ColumnTop", ForestProp("ColumnShort"), new Vector2(x + 3.5f, y + 1.5f), 42, new Color(0.85f, 0.85f, 0.9f));
                             break;
                         case 'B':
                         {
@@ -284,6 +289,17 @@ namespace TileVania.EditorTools
                         {
                             var t = Place("Chest_Gold", feet, "Boss");
                             finalChest = t.GetComponent<TreasureChest>();
+                            break;
+                        }
+                        case >= '1' and <= '9':
+                        {
+                            // story markers: the digit selects a beat for this level (StoryScript.BeatForDigit)
+                            var beat = StoryScript.BeatForDigit(spec.scene, ch);
+                            if (beat == null) throw new System.Exception($"No story beat for digit '{ch}' in {spec.layout}");
+                            // Backdrop scenery (the tree, the scratched wall) draws behind gameplay like other decor.
+                            bool backdrop = beat.prop is StoryProp.NotchedTree or StoryProp.DoorScrawl;
+                            var marks = BuildStoryPoint(beat, x, y, scene, Group(backdrop ? "StoryScenery" : "Story"));
+                            if (marks != null && beat.prop == StoryProp.NotchedTree) treeMarks = marks;
                             break;
                         }
                         case 'X': arenaTrigger = feet; hasArena = true; break;
@@ -317,7 +333,7 @@ namespace TileVania.EditorTools
             globalLight.color = castle ? new Color(0.68f, 0.62f, 0.95f) : new Color(1f, 0.97f, 0.92f);
             globalLight.targetSortingLayers = SortingLayer.layers.Select(l => l.id).ToArray();
 
-            BuildParallax(L, castle, cam);
+            var parallax = BuildParallax(L, castle, cam);
 
             // --- Kill zone below the level
             var kz = new GameObject("KillZone");
@@ -336,6 +352,18 @@ namespace TileVania.EditorTools
             lm.music = AssetDatabase.LoadAssetAtPath<AudioClip>($"{ContentBuilder.Root}/Audio/Music/{spec.music}");
             PrefabUtility.InstantiatePrefab(ContentBuilder.LoadPrefab("GameCanvas"), scene);
             UIBuilder.EventSystemObject();
+
+            // --- Story director (opening in the forest, ending at the final chest)
+            var director = new GameObject("StoryDirector").AddComponent<StoryDirector>();
+            director.isOpeningScene = spec.scene == SceneLoader.Level1;
+            director.player = player.GetComponent<PlayerController>();
+            director.treeMarks = treeMarks;
+            if (treeMarks != null) director.treeStandX = treeMarks.transform.position.x - 0.9f;
+            director.silhouetteSprite = ArtSetup.SingleSprite("Generated/Lia_0.png");
+            director.lanternSprite = ArtSetup.SingleSprite("Generated/Lantern_Lit.png");
+            director.gemSprites = new[] { "Gem_Red", "Gem_Green", "Gem_Blue", "Gem_Orange" }
+                .Select(n => ArtSetup.GetSprite("Items/Gems_CaveTileset.png", n)).ToArray();
+            director.unlitMaterial = ContentBuilder.Unlit;
 
             // --- Boss arena wiring
             if (spec.boss && boss != null && hasArena)
@@ -357,18 +385,105 @@ namespace TileVania.EditorTools
                     var dc = door.AddComponent<BoxCollider2D>(); dc.size = new Vector2(1f, 3f); dc.offset = new Vector2(0.5f, 1.5f);
                     var dv = new GameObject("Visual");
                     dv.transform.SetParent(door.transform, false);
-                    var dsr = ContentBuilder.AddSprite(dv, C("FenceHalf"), "Platforms", -1);
+                    var dsr = ContentBuilder.AddSprite(dv, CastleProp("FenceHalf"), "Platforms", -1);
                     dsr.drawMode = SpriteDrawMode.Tiled;
                     dsr.size = new Vector2(1f, 3f);
                     // Tiled sprites are centred on their pivot; offset so the bars fill the doorway.
                     dsr.transform.localPosition = Vector3.zero;
                     ba.doorCollider = dc; ba.doorVisual = dv.transform; ba.doorClosedY = 0f; ba.doorOpenY = 3f;
                 }
+
+                // --- The ending's flashback set, to the right of the level (never visible during play)
+                MemoryStageBuilder.Build(director, boss, finalChest, globalLight, parallax);
             }
 
             ContentBuilder.EnsureFolder(Scenes);
             EditorSceneManager.SaveScene(scene, $"{Scenes}/{spec.scene}.unity");
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Builds a story point and its scenery (Docs/STORY_SPEC.md). Returns the tally marks it carries, if any.
+        /// </summary>
+        static TallyMarks BuildStoryPoint(StoryBeat beat, int x, int y, Scene scene, Transform parent)
+        {
+            var feet = new Vector2(x + 0.5f, y);
+            if (beat.prop == StoryProp.MemoryShard)
+            {
+                var shard = (GameObject)PrefabUtility.InstantiatePrefab(ContentBuilder.LoadPrefab("MemoryShard"), scene);
+                shard.name = "MemoryShard_" + beat.id;
+                shard.transform.SetParent(parent, false);
+                shard.transform.position = PickupPosition("MemoryShard", x, y);
+                shard.GetComponent<MemoryShard>().memoryId = beat.id;
+                return null;
+            }
+
+            var root = new GameObject("Story_" + beat.id) { layer = Layers.Interactables };
+            root.transform.SetParent(parent, false);
+            root.transform.position = feet;
+            var point = root.AddComponent<StoryPoint>();
+            point.beatId = beat.id;
+            if (beat.kind != StoryPointKind.Readable)
+            {
+                var zone = root.AddComponent<BoxCollider2D>();
+                zone.isTrigger = true; zone.size = new Vector2(1.4f, 3.5f); zone.offset = new Vector2(0f, 1.75f);
+            }
+
+            var pixel = ArtSetup.SingleSprite("Generated/Pixel.png");
+            TallyMarks Marks(Vector3 local, string layer, int order, Color color)
+            {
+                var m = ContentBuilder.Child(root, "Notches", local).AddComponent<TallyMarks>();
+                m.markSprite = pixel; m.sortingLayer = layer; m.sortingOrder = order; m.color = color;
+                m.Build(Story.NotchesBeforeFirstPlay); // baked for the editor; rebuilt from the saved count at runtime
+                return m;
+            }
+
+            switch (beat.prop)
+            {
+                case StoryProp.NotchedTree:
+                {
+                    ContentBuilder.AddSprite(ContentBuilder.Child(root, "OldTree"), ArtSetup.SingleSprite("Generated/OldTree.png"), "Background", 25);
+                    ContentBuilder.AddSprite(ContentBuilder.Child(root, "Note", new Vector3(0.02f, 1.05f, 0f)),
+                        ArtSetup.SingleSprite("Generated/Note.png"), "Background", 27);
+                    return Marks(new Vector3(0.03f, 2.15f, 0f), "Background", 26, new Color(0.9f, 0.8f, 0.62f));
+                }
+                case StoryProp.RustedLantern:
+                {
+                    var lantern = ContentBuilder.Child(root, "Lantern", new Vector3(0f, 0.25f, 0f));
+                    lantern.transform.localRotation = Quaternion.Euler(0f, 0f, -78f);
+                    ContentBuilder.AddSprite(lantern, ArtSetup.SingleSprite("Generated/Lantern_Rusted.png"), "Interactables", -1);
+                    root.AddComponent<Glint>().offset = new Vector2(0f, 0.35f);
+                    return null;
+                }
+                case StoryProp.FaintGhost:
+                {
+                    var ghost = ContentBuilder.Child(root, "FaintGhost", new Vector3(0.2f, 3.0f, 0f));
+                    var frames = ArtSetup.Frames("Enemies/Enemy_ghost.png", "Ghost", 2);
+                    var sr = ContentBuilder.AddSprite(ghost, frames[0], "Enemy", -2, unlit: true);
+                    sr.color = new Color(0.75f, 0.85f, 1f, 0.42f);
+                    var anim = ghost.AddComponent<SpriteFrameAnimator>(); anim.frames = frames; anim.fps = 2f;
+                    var bob = ghost.AddComponent<Bobbing>(); bob.amplitude = new Vector2(0f, 0.2f); bob.frequency = 0.4f;
+                    point.fadeWhenDone = ghost;
+                    return null;
+                }
+                case StoryProp.DoorScrawl:
+                {
+                    var textGo = ContentBuilder.Child(root, "Scrawl", new Vector3(-0.1f, 3.0f, 0f));
+                    textGo.transform.localRotation = Quaternion.Euler(0f, 0f, 4f);
+                    var tmp = textGo.AddComponent<TextMeshPro>();
+                    tmp.font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
+                    tmp.text = "<i>I was so close.</i>";
+                    tmp.fontSize = 3.6f;
+                    tmp.alignment = TextAlignmentOptions.Center;
+                    tmp.color = new Color(0.88f, 0.86f, 0.95f, 0.75f);
+                    tmp.textWrappingMode = TextWrappingModes.NoWrap;
+                    tmp.rectTransform.sizeDelta = new Vector2(4f, 0.8f);
+                    tmp.sortingLayerID = SortingLayer.NameToID("Background");
+                    tmp.sortingOrder = 46;
+                    return Marks(new Vector3(0f, 2.35f, 0f), "Background", 46, new Color(0.86f, 0.84f, 0.92f));
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -437,7 +552,7 @@ namespace TileVania.EditorTools
             }
         }
 
-        static void BuildParallax(Layout L, bool castle, Camera cam)
+        static GameObject BuildParallax(Layout L, bool castle, Camera cam)
         {
             var root = new GameObject("Parallax");
             float cx = cam.transform.position.x, cy = cam.transform.position.y;
@@ -474,6 +589,7 @@ namespace TileVania.EditorTools
                 Layer("MountainsFar", Bg("mountain_large_blue"), new Vector2(0.85f, 0.88f), 1f, -90, new Color(0.62f, 0.68f, 0.88f), true);
                 Layer("MountainsNear", Bg("mountain_blue"), new Vector2(0.7f, 0.78f), 1.5f, -85, new Color(0.42f, 0.55f, 0.62f), true);
             }
+            return root;
         }
     }
 }

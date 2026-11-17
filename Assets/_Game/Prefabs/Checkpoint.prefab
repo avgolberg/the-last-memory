@@ -182,7 +182,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce1a5ac91cba90f468b692c577fafd9b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.Checkpoint
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.Checkpoint
   activeVisual: {fileID: 2754044404321179210}
   activeLight: {fileID: 2996173026273570235}
   respawnOffset: {x: 0, y: 0.1}
@@ -341,6 +341,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04cd9179830c782458a24212d18290cc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.LightFlicker
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.LightFlicker
   amount: 0.15
   speed: 6

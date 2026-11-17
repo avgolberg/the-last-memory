@@ -8,12 +8,12 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Tilemaps;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>
     /// One-click (or batch-mode) regeneration of the whole game:
-    /// Tools > TileVania > Rebuild Game, or
-    /// Unity.exe -batchmode -projectPath ... -executeMethod TileVania.EditorTools.GameBuildPipeline.BuildAllBatch -quit
+    /// Tools > The Last Memory > Rebuild Game, or
+    /// Unity.exe -batchmode -projectPath ... -executeMethod LastMemory.EditorTools.GameBuildPipeline.BuildAllBatch -quit
     /// </summary>
     public static class GameBuildPipeline
     {
@@ -22,24 +22,24 @@ namespace TileVania.EditorTools
             new LevelBuilder.LevelSpec
             {
                 layout = "Level1_Forest", scene = SceneLoader.Level1, title = "The Whispering Forest",
-                subtitle = "Find the way into the ancient ruins", nextScene = SceneLoader.Level2,
+                subtitle = "The Awakening", nextScene = SceneLoader.Level2,
                 music = "Music_PerilousDungeon.mp3",
             },
             new LevelBuilder.LevelSpec
             {
                 layout = "Level2_Castle", scene = SceneLoader.Level2, title = "The Abandoned Castle",
-                subtitle = "Two keys guard the treasure chamber", nextScene = SceneLoader.Boss,
+                subtitle = "The Forgotten Past", nextScene = SceneLoader.Boss,
                 music = "Music_SpookyDungeon.ogg", castle = true,
             },
             new LevelBuilder.LevelSpec
             {
                 layout = "Level3_TreasureChamber", scene = SceneLoader.Boss, title = "The Treasure Chamber",
-                subtitle = "Something ancient stirs...", nextScene = SceneLoader.MainMenu,
+                subtitle = "The Last Memory", nextScene = SceneLoader.MainMenu,
                 music = "Music_SpookyDungeon.ogg", castle = true, boss = true,
             },
         };
 
-        [MenuItem("Tools/TileVania/Rebuild Game (art, prefabs, scenes)")]
+        [MenuItem("Tools/The Last Memory/Rebuild Game (art, prefabs, scenes)")]
         public static void BuildAll()
         {
             ContentBuilder.SetupProject();
@@ -51,7 +51,7 @@ namespace TileVania.EditorTools
             foreach (var l in Levels) LevelBuilder.Build(l);
             SetBuildSettings();
             AssetDatabase.SaveAssets();
-            Debug.Log("[TileVania] Build complete.\n" + Validate());
+            Debug.Log("[LastMemory] Build complete.\n" + Validate());
         }
 
         public static void BuildAllBatch()
@@ -69,19 +69,22 @@ namespace TileVania.EditorTools
             }
         }
 
-        /// <summary>Builds a Windows player into Builds/Windows (git-ignored) to verify the game builds.</summary>
-        [MenuItem("Tools/TileVania/Build Windows Player")]
+        /// <summary>Where the Windows player is built (the Builds folder is git-ignored).</summary>
+        public const string WindowsBuildPath = "Builds/" + GameInfo.BuildName + "_Windows/" + GameInfo.Title + ".exe";
+
+        /// <summary>Builds the Windows player to verify the game builds.</summary>
+        [MenuItem("Tools/The Last Memory/Build Windows Player")]
         public static void BuildWindowsPlayer()
         {
             var options = new BuildPlayerOptions
             {
                 scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
-                locationPathName = "Builds/Windows/TileVania.exe",
+                locationPathName = WindowsBuildPath,
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.None,
             };
             var report = BuildPipeline.BuildPlayer(options);
-            Debug.Log($"[TileVania] Player build: {report.summary.result}, errors={report.summary.totalErrors}, size={report.summary.totalSize / (1024 * 1024)} MB");
+            Debug.Log($"[LastMemory] Player build: {report.summary.result}, errors={report.summary.totalErrors}, size={report.summary.totalSize / (1024 * 1024)} MB");
         }
 
         public static void BuildWindowsPlayerBatch()
@@ -92,7 +95,7 @@ namespace TileVania.EditorTools
 
         public static void ValidateBatch()
         {
-            Debug.Log("[TileVania] " + Validate());
+            Debug.Log("[LastMemory] " + Validate());
             EditorApplication.Exit(0);
         }
 
@@ -125,7 +128,7 @@ namespace TileVania.EditorTools
             light.intensity = 0.9f;
             light.targetSortingLayers = SortingLayer.layers.Select(l => l.id).ToArray();
 
-            Sprite F(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
+            Sprite F(string n) => ArtSetup.ForestTile(n);
             Sprite Bg(string n) => ArtSetup.SingleSprite($"Environment/Forest/Forest_{n}.png");
             GameObject MakeSprite(string name, Sprite s, Vector2 pos, string layer, int order, Color tint, bool unlit = false)
             {
@@ -188,7 +191,7 @@ namespace TileVania.EditorTools
         }
 
         // ------------------------------------------------------------------ validation
-        [MenuItem("Tools/TileVania/Validate Scenes")]
+        [MenuItem("Tools/The Last Memory/Validate Scenes")]
         public static string Validate()
         {
             var sb = new StringBuilder();
@@ -232,15 +235,42 @@ namespace TileVania.EditorTools
                     bool nextOk = EditorBuildSettings.scenes.Any(b => Path.GetFileNameWithoutExtension(b.path) == lm.nextScene);
                     if (!nextOk) { sb.AppendLine($"  nextScene '{lm.nextScene}' not in build settings"); problems++; }
                     if (lm.player == null || lm.music == null) { sb.AppendLine("  LevelManager missing player or music"); problems++; }
+                    var director = Object.FindFirstObjectByType<StoryDirector>();
+                    if (director == null) { sb.AppendLine("  no StoryDirector"); problems++; }
+
+                    // The boss scene plays the ending: it needs the flashback set, its actors and the Keeper.
+                    if (Object.FindFirstObjectByType<DragonBoss>(FindObjectsInactive.Include) != null)
+                    {
+                        var fb = Object.FindFirstObjectByType<MemoryFlashback>(FindObjectsInactive.Include);
+                        bool wired = fb != null && director != null && director.flashback == fb && director.keeper != null
+                                     && fb.hero != null && fb.lia != null && fb.liaLantern != null && fb.goldSack != null
+                                     && fb.room != null && fb.windowLantern != null && fb.doorway != null && fb.globalLight != null
+                                     && fb.keeper != null && fb.player != null && fb.chest != null;
+                        if (!wired) { sb.AppendLine("  the ending's flashback is missing or not wired"); problems++; }
+                    }
                 }
+
+                // Story points: every beat must exist and appear only once per scene.
+                var storyIds = new HashSet<string>();
+                foreach (var sp in Object.FindObjectsByType<StoryPoint>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (StoryScript.Beat(sp.beatId) == null) { sb.AppendLine($"  unknown story beat '{sp.beatId}'"); problems++; }
+                    if (!storyIds.Add(sp.beatId)) { sb.AppendLine($"  duplicate story beat '{sp.beatId}'"); problems++; }
+                }
+                foreach (var ms in Object.FindObjectsByType<MemoryShard>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (StoryScript.Beat(ms.memoryId) == null) { sb.AppendLine($"  unknown memory '{ms.memoryId}'"); problems++; }
+                    if (!storyIds.Add(ms.memoryId)) { sb.AppendLine($"  duplicate memory '{ms.memoryId}'"); problems++; }
+                }
+                if (storyIds.Count > 0) sb.AppendLine($"  story points: {string.Join(", ", storyIds.OrderBy(i => i))}");
             }
             sb.Insert(0, $"Validation: {problems} problem(s)\n");
-            File.WriteAllText("Temp/tilevania_validation.txt", sb.ToString());
+            File.WriteAllText("Temp/validation.txt", sb.ToString());
             return sb.ToString();
         }
 
         // ------------------------------------------------------------------ screenshots
-        [MenuItem("Tools/TileVania/Capture Preview Screenshots")]
+        [MenuItem("Tools/The Last Memory/Capture Preview Screenshots")]
         public static void CaptureScreenshots()
         {
             Directory.CreateDirectory("Docs/Screenshots");
@@ -256,7 +286,50 @@ namespace TileVania.EditorTools
                 var boss = Object.FindFirstObjectByType<DragonBoss>(FindObjectsInactive.Include);
                 boss.transform.position = new Vector3(28f, 12f, 0f);
             });
-            Capture(SceneLoader.Boss, "_victory", new[] { new Vector2(26, 10) }, () => ShowOnly("VictoryPanel"));
+            Capture(SceneLoader.Boss, "_ending", new[] { new Vector2(26, 10) }, () =>
+            {
+                ShowOnly("EndingPanel");
+                Object.FindFirstObjectByType<GameMenus>(FindObjectsInactive.Include).endingStats.text =
+                    "Gems gathered: 64\nMemories glimpsed: 3 of 4\nTime: 14:32    Deaths: 5\nNotches on the tree: 8";
+            });
+
+            // Story scenery and the dialogue box (the scene is not saved)
+            Capture(SceneLoader.Level1, "_story", new[] { new Vector2(10, 11) }, () =>
+            {
+                ShowHud();
+                ShowDialogue("Note", "This time, don't open the chest.", new Color(1f, 0.88f, 0.66f), true);
+            });
+            Capture(SceneLoader.Level1, "_lantern", new[] { new Vector2(76, 13) }, () =>
+            {
+                ShowHud();
+                Object.FindFirstObjectByType<HUD>().promptGroup.alpha = 1f;
+            });
+            Capture(SceneLoader.Level2, "_story", new[] { new Vector2(62, 8), new Vector2(122, 7) }, () =>
+            {
+                ShowHud();
+                ShowDialogue("Faint Ghost", "You always rush past us, as if someone is waiting for you.", new Color(0.95f, 0.92f, 0.85f), false);
+            });
+            Capture(SceneLoader.Boss, "_story", new[] { new Vector2(20, 7) }, () =>
+            {
+                ShowHud();
+                Find("BossBar").SetActive(true);
+                var boss = Object.FindFirstObjectByType<DragonBoss>(FindObjectsInactive.Include);
+                boss.transform.position = new Vector3(24f, 9f, 0f);
+                ShowDialogue("Dragon", "Because you never remember the answer.", new Color(0.95f, 0.92f, 0.85f), false);
+                var overlay = Object.FindFirstObjectByType<CinematicOverlay>(FindObjectsInactive.Include);
+                overlay.letterboxTop.sizeDelta = new Vector2(0f, overlay.letterboxHeight);
+                overlay.letterboxBottom.sizeDelta = new Vector2(0f, overlay.letterboxHeight);
+            });
+        }
+
+        static void ShowDialogue(string speaker, string text, Color color, bool italic)
+        {
+            var box = Object.FindFirstObjectByType<DialogueBox>(FindObjectsInactive.Include);
+            box.group.alpha = 1f;
+            box.speakerText.text = speaker;
+            box.bodyText.text = text;
+            box.bodyText.color = color;
+            box.bodyText.fontStyle = italic ? TMPro.FontStyles.Italic : TMPro.FontStyles.Normal;
         }
 
         static GameObject Find(string name) =>

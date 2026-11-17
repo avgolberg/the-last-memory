@@ -214,7 +214,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9518f0318d776804fa739f5b7c84b24b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TileVania.Runtime::TileVania.LockedGate
+  m_EditorClassIdentifier: LastMemory.Runtime::LastMemory.LockedGate
   requiredKey: 0
   solidCollider: {fileID: 9077597367168406518}
   visual: {fileID: 1963378987558450542}

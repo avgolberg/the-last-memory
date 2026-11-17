@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace TileVania.Tests
+namespace LastMemory.Tests
 {
     /// <summary>
     /// Iteration 2 coverage: context-sensitive keyboard controls, ladders in both directions,
@@ -20,6 +20,9 @@ namespace TileVania.Tests
         {
             while (SceneLoader.IsLoading) yield return null;
             GameInput.Simulated = new GameInput.SimulatedInput { Enabled = true };
+            DialogueBox.TestAutoAdvance = true;
+            StoryDirector.CutsceneSpeed = 6f;
+            Story.BeginNewCycle(Story.Opening.None);
             SceneManager.LoadScene(scene);
             yield return null;
             yield return null;
@@ -31,6 +34,8 @@ namespace TileVania.Tests
         public void TearDown()
         {
             GameInput.Simulated = default;
+            DialogueBox.TestAutoAdvance = false;
+            StoryDirector.CutsceneSpeed = 1f;
             Time.timeScale = 1f;
         }
 
@@ -89,6 +94,46 @@ namespace TileVania.Tests
             Assert.Less(Mathf.Abs(player.transform.position.y - y0), 0.05f, "Up + X must not trigger a jump");
             Assert.IsTrue(player.IsGrounded);
             Move(0f, 0f);
+        }
+
+        [UnityTest]
+        public IEnumerator C_ShootsUp_StandingOrRunning_WithoutJumping([Values(0f, 1f)] float run)
+        {
+            yield return Load(SceneLoader.Level1);
+            float y0 = player.transform.position.y;
+            Move(run, 0f);
+            yield return new WaitForSeconds(0.2f);
+            GameInput.Simulated.ShootUpPressed = true;
+            yield return null;
+            yield return null;
+            var proj = Object.FindFirstObjectByType<Projectile>();
+            Assert.IsNotNull(proj, "C should fire");
+            var v = proj.GetComponent<Rigidbody2D>().linearVelocity;
+            Assert.Greater(v.y, 10f, "C fires straight up");
+            Assert.Less(Mathf.Abs(v.x), 0.01f, "not sideways, even while running");
+            yield return new WaitForSeconds(0.3f);
+            Assert.Less(Mathf.Abs(player.transform.position.y - y0), 0.05f, "C never jumps");
+            if (run > 0f) Assert.Greater(player.Body.linearVelocity.x, 5f, "running continues while shooting up");
+            Move(0f, 0f);
+        }
+
+        [UnityTest]
+        public IEnumerator C_ShootsUp_InMidAir_AndJumpStillWorks()
+        {
+            yield return Load(SceneLoader.Level1);
+            float y0 = player.transform.position.y;
+            GameInput.Simulated.JumpPressed = true;
+            GameInput.Simulated.JumpHeld = true;
+            yield return new WaitForSeconds(0.12f);
+            GameInput.Simulated.ShootUpPressed = true;
+            yield return null;
+            yield return null;
+            var proj = Object.FindFirstObjectByType<Projectile>();
+            Assert.IsNotNull(proj, "C fires in the air");
+            Assert.Greater(proj.GetComponent<Rigidbody2D>().linearVelocity.y, 10f);
+            yield return new WaitForSeconds(0.15f);
+            Assert.Greater(player.transform.position.y, y0 + 1.5f, "the jump is not interrupted by the upward shot");
+            GameInput.Simulated.JumpHeld = false;
         }
 
         [UnityTest]
@@ -254,7 +299,8 @@ namespace TileVania.Tests
             var level = GameObject.Find("Level").transform;
             foreach (Transform group in level)
             {
-                if (group.name == "Decor" || group.name == "Lights" || group.name == "Boss") continue;
+                // Backdrop groups: decor, torches, the boss, and story scenery (the notched tree, the scratched wall).
+                if (group.name == "Decor" || group.name == "Lights" || group.name == "Boss" || group.name == "StoryScenery") continue;
                 foreach (Transform obj in group)
                 {
                     foreach (var sr in obj.GetComponentsInChildren<SpriteRenderer>())

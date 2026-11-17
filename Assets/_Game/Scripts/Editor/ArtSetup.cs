@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>
     /// Configures every imported texture consistently (point filter, no compression, no mips,
@@ -55,8 +55,10 @@ namespace TileVania.EditorTools
             Strip("Enemies/Enemy_spider.png", "Spider", 138, 138, 6, 80, Center);
 
             // Forest (Glax pixel art platformer pack)
+            // Forest tiles go into an extruded copy of the sheet (see ExtrudeTiles); props stay on the original.
+            var forestTiles = new List<Slice>();
             var forest = new List<Slice>();
-            void FCell(string n, int cx, int cy) => forest.Add(new Slice("Forest_" + n, cx * 16, cy * 16, 16, 16, Center));
+            void FCell(string n, int cx, int cy) => forestTiles.Add(new Slice("Forest_" + n, cx * 16, cy * 16, 16, 16, Center));
             FCell("Top_Mid", 2, 0); FCell("Top_Left", 1, 0); FCell("Top_Right", 3, 0); FCell("Top_Single", 8, 0);
             FCell("Fill_0", 6, 2); FCell("Fill_1", 7, 2); FCell("Fill_2", 5, 3); FCell("Fill_3", 6, 3); FCell("Fill_4", 7, 3);
             FCell("FillL_0", 10, 2); FCell("FillL_1", 10, 3); FCell("FillR_0", 11, 2); FCell("FillR_1", 11, 3);
@@ -71,6 +73,7 @@ namespace TileVania.EditorTools
             forest.Add(new Slice("Forest_Fire", 96, 64, 16, 16, BottomCenter));
             forest.Add(new Slice("Forest_FireBall", 96, 64, 16, 16, new Vector2(0.5f, 9.5f / 16f)));
             Sheet("Environment/Forest/Forest_Tiles.png", 16, forest.ToArray());
+            Sheet(ForestTileSheet, 16, ExtrudeTiles("Environment/Forest/Forest_Tiles.png", ForestTileSheet, forestTiles).ToArray(), fullRect: true);
 
             Sheet("Environment/Forest/Forest_ruins.png", 16, new[] { new Slice("Ruins_Arch", 0, 64, 64, 64, BottomLeft) });
             Sheet("Environment/Forest/Forest_tree.png", 16, new[] { new Slice("Tree_Trunk", 128, 0, 80, 80, new Vector2(0.42f, 0f)) });
@@ -93,13 +96,14 @@ namespace TileVania.EditorTools
             Single("Environment/Forest/Forest_rock.png", 16, Center);
 
             // Castle (Spooky Castle tileset)
+            var castleTiles = new List<Slice>();
             var castle = new List<Slice>();
-            void CCell(string n, int cx, int cy) => castle.Add(new Slice("Castle_" + n, cx * 16, cy * 16, 16, 16, Center));
+            void CCell(string n, int cx, int cy) => castleTiles.Add(new Slice("Castle_" + n, cx * 16, cy * 16, 16, 16, Center));
             CCell("Cap_0", 3, 1); CCell("Cap_1", 4, 1);
             CCell("Top_0", 3, 2); CCell("Top_1", 4, 2);
             CCell("Fill_0", 3, 3); CCell("Fill_1", 4, 3); CCell("Fill_2", 3, 4); CCell("Fill_3", 4, 4);
             for (int i = 0; i < 4; i++) { CCell("BackTop_" + i, 5 + i, 12); CCell("BackFill_" + i, 5 + i, 13); CCell("BackFill2_" + i, 5 + i, 14); }
-            for (int i = 0; i < 6; i++) castle.Add(new Slice("Castle_Plank_" + i, 288 + i * 16, 92, 16, 16, Center));
+            for (int i = 0; i < 6; i++) castleTiles.Add(new Slice("Castle_Plank_" + i, 288 + i * 16, 92, 16, 16, Center));
             castle.Add(new Slice("Castle_Torch", 232, 134, 16, 20, Center));
             castle.Add(new Slice("Castle_WindowRound", 288, 192, 32, 32, Center));
             castle.Add(new Slice("Castle_WindowNarrow", 320, 192, 32, 32, Center));
@@ -110,6 +114,7 @@ namespace TileVania.EditorTools
             castle.Add(new Slice("Castle_Crate", 320, 288, 32, 32, BottomCenter));
             castle.Add(new Slice("Castle_Barrel", 352, 288, 32, 32, BottomCenter));
             Sheet("Environment/Castle/Castle_Tiles.png", 16, castle.ToArray(), fullRect: true);
+            Sheet(CastleTileSheet, 16, ExtrudeTiles("Environment/Castle/Castle_Tiles.png", CastleTileSheet, castleTiles).ToArray(), fullRect: true);
 
             // Items
             Sheet("Items/Gems_CaveTileset.png", 16, new[]
@@ -134,6 +139,54 @@ namespace TileVania.EditorTools
             Single("Boss/Dragon_B.png", 8, BottomCenter);
 
             AssetDatabase.SaveAssets();
+        }
+
+        // ------------------------------------------------------------------ tile extrusion
+        public const string ForestTileSheet = "Environment/Forest/Forest_Tiles_Extruded.png";
+        public const string CastleTileSheet = "Environment/Castle/Castle_Tiles_Extruded.png";
+
+        /// <summary>A forest tile for tilemaps (from the extruded sheet).</summary>
+        public static Sprite ForestTile(string name) => GetSprite(ForestTileSheet, "Forest_" + name);
+
+        /// <summary>A castle tile for tilemaps (from the extruded sheet).</summary>
+        public static Sprite CastleTile(string name) => GetSprite(CastleTileSheet, "Castle_" + name);
+
+        /// <summary>
+        /// Copies each 16x16 tile into its own 18x18 slot of a new texture, with a 1-pixel border that repeats the
+        /// tile's own edge pixels ("extrusion"), and returns the slices for the new texture.
+        /// Why: in the original sheet every tile touches its neighbours (often transparent ones). When the camera is
+        /// at a sub-pixel position, a screen pixel can land exactly on a tile edge and sample the neighbouring cell,
+        /// which shows as a thin seam between tiles. With extrusion, that sample returns the tile's own colour.
+        /// </summary>
+        static List<Slice> ExtrudeTiles(string sourceRel, string targetRel, List<Slice> tiles)
+        {
+            const int size = 16, slot = size + 2, columns = 16;
+            var src = new Texture2D(2, 2);
+            src.LoadImage(File.ReadAllBytes($"{Art}/{sourceRel}"));
+            int rows = (tiles.Count + columns - 1) / columns;
+            var dst = new Texture2D(columns * slot, rows * slot, TextureFormat.RGBA32, false);
+            dst.SetPixels32(new Color32[dst.width * dst.height]);
+
+            var result = new List<Slice>();
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                var t = tiles[i];
+                int ox = (i % columns) * slot, oy = (i / columns) * slot; // slot's top-left corner (top-left origin)
+                for (int dx = -1; dx <= size; dx++)
+                    for (int dy = -1; dy <= size; dy++)
+                    {
+                        int sx = t.x + Mathf.Clamp(dx, 0, size - 1), sy = t.y + Mathf.Clamp(dy, 0, size - 1);
+                        var c = src.GetPixel(sx, src.height - 1 - sy);                       // textures are bottom-up
+                        dst.SetPixel(ox + 1 + dx, dst.height - 1 - (oy + 1 + dy), c);
+                    }
+                result.Add(new Slice(t.name, ox + 1, oy + 1, size, size, t.pivot));
+            }
+            dst.Apply();
+            File.WriteAllBytes($"{Art}/{targetRel}", dst.EncodeToPNG());
+            Object.DestroyImmediate(src);
+            Object.DestroyImmediate(dst);
+            AssetDatabase.ImportAsset($"{Art}/{targetRel}", ImportAssetOptions.ForceUpdate);
+            return result;
         }
 
         static TextureImporter Prepare(string relPath, int ppu, SpriteImportMode mode, bool fullRect)

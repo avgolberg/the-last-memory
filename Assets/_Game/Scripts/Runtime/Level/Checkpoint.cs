@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Touch to set the respawn point. Lights a flame and restores health.</summary>
     public class Checkpoint : MonoBehaviour
@@ -18,7 +18,7 @@ namespace TileVania
         void OnTriggerEnter2D(Collider2D other)
         {
             if (IsActive) return;
-            var player = other.attachedRigidbody != null ? other.attachedRigidbody.GetComponent<PlayerController>() : null;
+            var player = PlayerController.FromCollider(other);
             if (player == null || LevelManager.Instance == null) return;
             LevelManager.Instance.SetCheckpoint(this);
             player.GetComponent<PlayerHealth>().Heal(99);

@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>Builds the in-game canvas prefab (HUD + menus) and the main menu canvas.</summary>
     public static class UIBuilder
@@ -196,6 +196,8 @@ namespace TileVania.EditorTools
             var canvas = Canvas("GameCanvas", 10);
             var hud = canvas.AddComponent<HUD>();
             var hudRoot = Stretch(canvas, "HUD").gameObject;
+            hud.hudGroup = hudRoot.AddComponent<CanvasGroup>();
+            hud.hudGroup.blocksRaycasts = false;
 
             hud.heartFull = ArtSetup.SingleSprite("Generated/Heart_Full.png");
             hud.heartEmpty = ArtSetup.SingleSprite("Generated/Heart_Empty.png");
@@ -223,11 +225,21 @@ namespace TileVania.EditorTools
 
             var boss = Rect(hudRoot, "BossBar", new Vector2(0.5f, 1f), new Vector2(0, -40), new Vector2(900, 90));
             hud.bossBarRoot = boss.gameObject;
-            hud.bossNameText = Label(boss.gameObject, "Name", "Guardian of the Treasure", 34, Gold, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900, 44), title: true);
+            hud.bossNameText = Label(boss.gameObject, "Name", "The Keeper", 34, Gold, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900, 44), title: true);
             Img(Rect(boss.gameObject, "Back", new Vector2(0.5f, 0f), new Vector2(0, 6), new Vector2(880, 34)), UISprite, new Color(0.05f, 0.02f, 0.05f, 0.9f), true);
             var fill = Img(Rect(boss.gameObject, "Fill", new Vector2(0.5f, 0f), new Vector2(0, 12), new Vector2(868, 22)), Pixel, new Color(0.85f, 0.18f, 0.18f));
             fill.type = Image.Type.Filled; fill.fillMethod = Image.FillMethod.Horizontal; fill.fillAmount = 1f;
             hud.bossBarFill = fill;
+            hud.bossNameText.text = "The Keeper";
+
+            // Examine prompt ("Enter  Examine"), above the toast line
+            var prompt = Rect(hudRoot, "Prompt", new Vector2(0.5f, 0f), new Vector2(0, 200), new Vector2(300, 56));
+            Img(prompt, UISprite, new Color(0.05f, 0.03f, 0.08f, 0.8f), true);
+            hud.promptGroup = prompt.gameObject.AddComponent<CanvasGroup>();
+            hud.promptText = Label(prompt.gameObject, "Text", "<b>Enter</b>   Examine", 30, Gold, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(290, 52));
+
+            BuildCinematicOverlay(canvas);
+            BuildDialogueBox(canvas);
 
             var menus = canvas.AddComponent<GameMenus>();
             var pause = Panel(canvas, "PausePanel", "Paused", Gold, null, 640);
@@ -238,24 +250,27 @@ namespace TileVania.EditorTools
             MakeVolumeRow(pause, "Sound FX", VolumeSlider.Channel.Sfx);
             menus.pauseMenuButton = MakeButton(pause, "Main Menu");
 
-            var death = Panel(canvas, "DeathPanel", "You Fell", new Color(1f, 0.4f, 0.35f), "The treasure still awaits...", 480);
+            var death = Panel(canvas, "DeathPanel", "You Fell", new Color(1f, 0.4f, 0.35f), "Not yet. Not like this.", 480);
             menus.deathPanel = death.transform.parent.parent.gameObject;
             menus.retryButton = MakeButton(death, "Retry from Checkpoint");
             menus.deathMenuButton = MakeButton(death, "Main Menu");
 
-            var victory = Panel(canvas, "VictoryPanel", "Victory!", Gold, "You claimed the Guardian's treasure.", 560);
-            menus.victoryPanel = victory.transform.parent.parent.gameObject;
-            menus.victoryStats = Label(victory, "Stats", "", 32, Text, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520, 150));
-            menus.victoryStats.gameObject.AddComponent<LayoutElement>().preferredHeight = 150;
-            menus.victoryMenuButton = MakeButton(victory, "Main Menu");
+            // The ending panel, shown after the loop back to the forest
+            var ending = Panel(canvas, "EndingPanel", GameInfo.Title, Gold, "The cycle begins again.", 680);
+            menus.endingPanel = ending.transform.parent.parent.gameObject;
+            menus.endingStats = Label(ending, "Stats", "", 30, Text, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(540, 190));
+            menus.endingStats.gameObject.AddComponent<LayoutElement>().preferredHeight = 190;
+            menus.beginAgainButton = MakeButton(ending, "Begin Again");
+            menus.endingMenuButton = MakeButton(ending, "Main Menu");
 
             // Saved hidden so the scene view stays clean; HUD/GameMenus also hide them at runtime.
             menus.pausePanel.SetActive(false);
             menus.deathPanel.SetActive(false);
-            menus.victoryPanel.SetActive(false);
+            menus.endingPanel.SetActive(false);
             hud.bossBarRoot.SetActive(false);
             hud.titleGroup.alpha = 0f;
             hud.messageGroup.alpha = 0f;
+            hud.promptGroup.alpha = 0f;
 
             string path = ContentBuilder.Prefabs + "/GameCanvas.prefab";
             PrefabUtility.SaveAsPrefabAsset(canvas, path);
@@ -263,12 +278,60 @@ namespace TileVania.EditorTools
             return AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
+        /// <summary>Letterbox bars, a full-screen fade and a centred caption, drawn above the HUD.</summary>
+        static void BuildCinematicOverlay(GameObject canvas)
+        {
+            var root = Stretch(canvas, "Cinematic");
+            var overlay = root.gameObject.AddComponent<CinematicOverlay>();
+            RectTransform Bar(string name, float anchorY)
+            {
+                var rt = Rect(root.gameObject, name, new Vector2(0.5f, anchorY), Vector2.zero, Vector2.zero);
+                rt.anchorMin = new Vector2(0f, anchorY); rt.anchorMax = new Vector2(1f, anchorY);
+                rt.pivot = new Vector2(0.5f, anchorY);
+                rt.sizeDelta = Vector2.zero;
+                Img(rt, Pixel, Color.black);
+                return rt;
+            }
+            overlay.letterboxTop = Bar("LetterboxTop", 1f);
+            overlay.letterboxBottom = Bar("LetterboxBottom", 0f);
+            var fade = Stretch(root.gameObject, "Fade");
+            overlay.fade = Img(fade, Pixel, Color.clear);
+            var caption = Stretch(root.gameObject, "Caption");
+            overlay.captionGroup = caption.gameObject.AddComponent<CanvasGroup>();
+            overlay.captionGroup.alpha = 0f;
+            overlay.captionText = Label(caption.gameObject, "Text", "", 54, Gold, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1600, 200), title: true);
+            overlay.captionText.fontStyle = FontStyles.Italic;
+        }
+
+        /// <summary>The dialogue box: a framed panel at the bottom with a speaker plate and a continue hint.</summary>
+        static void BuildDialogueBox(GameObject canvas)
+        {
+            var root = Rect(canvas, "DialogueBox", new Vector2(0.5f, 0f), new Vector2(0, 36), new Vector2(1240, 200));
+            var box = root.gameObject.AddComponent<DialogueBox>();
+            box.group = root.gameObject.AddComponent<CanvasGroup>();
+            box.group.alpha = 0f;
+            box.group.blocksRaycasts = false;
+            Img(root, UISprite, new Color(0.06f, 0.04f, 0.1f, 0.92f), true);
+            Img(Rect(root.gameObject, "Border", new Vector2(0.5f, 1f), new Vector2(0, -5), new Vector2(1210, 3)), Pixel, Gold * new Color(1, 1, 1, 0.7f));
+
+            var plate = Rect(root.gameObject, "SpeakerPlate", new Vector2(0f, 1f), new Vector2(36, 26), new Vector2(330, 52));
+            Img(plate, UISprite, new Color(0.2f, 0.14f, 0.28f, 1f), true);
+            box.speakerPlate = plate.gameObject;
+            box.speakerText = Label(plate.gameObject, "Speaker", "???", 30, Gold, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(310, 48), title: true);
+            box.speakerText.fontStyle = FontStyles.Bold;
+
+            box.bodyText = Label(root.gameObject, "Body", "", 36, Text, new Vector2(0.5f, 1f), new Vector2(0, -40), new Vector2(1150, 120), TextAlignmentOptions.TopLeft);
+            box.hintText = Label(root.gameObject, "Hint", "Z / X  continue", 22, Text * new Color(1, 1, 1, 0.7f), new Vector2(1f, 0f), new Vector2(-28, 10), new Vector2(260, 32), TextAlignmentOptions.Right);
+        }
+
         // ------------------------------------------------------------------ main menu
         public static void BuildMainMenuCanvas(MainMenuController controller)
         {
             var canvas = Canvas("MenuCanvas", 10);
-            Label(canvas, "Title", "TileVania", 150, Gold, new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(1400, 180), title: true);
-            Label(canvas, "Subtitle", "Treasure Hunt", 56, Text, new Vector2(0.5f, 1f), new Vector2(0, -260), new Vector2(1200, 80), title: true);
+            Label(canvas, "Title", GameInfo.Title, 132, Gold, new Vector2(0.5f, 1f), new Vector2(0, -100), new Vector2(1600, 170), title: true);
+            var tagline = Label(canvas, "Tagline", GameInfo.Tagline, 38, new Color(0.8f, 0.8f, 0.95f),
+                new Vector2(0.5f, 1f), new Vector2(0, -280), new Vector2(1400, 60), title: true);
+            tagline.fontStyle = FontStyles.Italic;
 
             var main = Rect(canvas, "MainPanel", new Vector2(0.5f, 0.5f), new Vector2(0, -120), new Vector2(420, 360));
             var layout = main.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -292,6 +355,8 @@ namespace TileVania.EditorTools
             ((RectTransform)credits.transform.parent).sizeDelta = new Vector2(1100, 820);
             ((RectTransform)credits.transform).sizeDelta = new Vector2(1040, 620);
             var text = Label(credits, "Text",
+                $"<b>{GameInfo.Title}</b> - a student project made with Unity and C#\n" +
+                "<b>Story, design, code, and the tree, note, lantern, cottage and Lia sprites</b> - made for this project\n\n" +
                 "<b>Hero</b> - Adventurer Hero by STAEL\n" +
                 "<b>Forest, ruins, dragon</b> - Pixel Art Platformer Asset Pack by Glax (CC0)\n" +
                 "<b>Castle</b> - Spooky Castle Tileset (OpenGameArt)\n" +
@@ -311,8 +376,8 @@ namespace TileVania.EditorTools
             controller.creditsPanel.SetActive(false);
 
             Label(canvas, "Hint",
-                "Move: Left / Right    Jump: Up, Z or Space    Ladders: Up / Down    Shoot: X    Shoot up: Up + X\n" +
-                "Drop through ledge: Down + Z    Pause: Esc    Menus: arrows + Enter",
+                "Move: Left / Right    Jump: Up, Z or Space    Ladders: Up / Down    Shoot: X    Shoot up: C (or Up + X)\n" +
+                "Drop through ledge: Down + Z    Examine: Enter    Dialogue: Z / X / Enter    Pause: Esc    Menus: arrows + Enter",
                 24, Text * new Color(1, 1, 1, 0.75f), new Vector2(0.5f, 0f), new Vector2(0, 24), new Vector2(1800, 70));
         }
     }

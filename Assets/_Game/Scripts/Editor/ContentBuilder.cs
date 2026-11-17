@@ -6,7 +6,7 @@ using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace TileVania.EditorTools
+namespace LastMemory.EditorTools
 {
     /// <summary>Project settings, materials, animation assets, gameplay prefabs and the SFX library.</summary>
     public static class ContentBuilder
@@ -66,7 +66,7 @@ namespace TileVania.EditorTools
             physics.ApplyModifiedPropertiesWithoutUndo();
             Layers.ApplyCollisionMatrix();
 
-            PlayerSettings.productName = "TileVania - Treasure Hunt";
+            PlayerSettings.productName = GameInfo.Title;
             AssetDatabase.SaveAssets();
         }
 
@@ -311,6 +311,17 @@ namespace TileVania.EditorTools
                 var h = go.AddComponent<HeartPickup>(); h.sound = Sfx.Heal; h.sparkleColor = new Color(1f, 0.4f, 0.5f);
                 Save<Transform>(go, "Pickup_Heart");
             }
+            {
+                // Optional memory fragment: a pale, glowing shard (the level builder sets which memory it holds).
+                var go = PickupRoot("MemoryShard", ArtSetup.GetSprite("Items/Gems_CaveTileset.png", "Gem_Blue"), 0.45f);
+                var v = go.transform.Find("Visual");
+                v.localScale = new Vector3(1.25f, 1.25f, 1f);
+                v.GetComponent<SpriteRenderer>().color = new Color(0.88f, 0.84f, 1f);
+                var shard = go.AddComponent<MemoryShard>(); shard.sound = Sfx.Key; shard.sparkleColor = new Color(0.85f, 0.8f, 1f);
+                AddPointLight(Child(go, "Glow"), new Color(0.75f, 0.7f, 1f), 2.8f, 0.9f).gameObject.AddComponent<LightFlicker>();
+                var glint = go.AddComponent<Glint>(); glint.color = new Color(0.9f, 0.85f, 1f); glint.interval = 1.3f;
+                Save<Transform>(go, "MemoryShard");
+            }
 
             var greenGem = LoadPrefab("Gem_Green").GetComponent<Gem>();
             var orangeGem = LoadPrefab("Gem_Orange").GetComponent<Gem>();
@@ -340,13 +351,12 @@ namespace TileVania.EditorTools
                 var go = new GameObject("ExitPortal") { layer = Layers.Interactables };
                 var open = Enumerable.Range(0, 17).Select(i => ArtSetup.GetSprite("Portals/Portal_Open.png", "PortalOpen_" + i.ToString("00"))).ToArray();
                 var loop = ArtSetup.Frames("Portals/Portal_Loop.png", "PortalLoop", 5);
-                var sr = AddSprite(go, open[0], "Interactables", 0, unlit: true);
+                AddSprite(go, open[0], "Interactables", 0, unlit: true);
                 var anim = Animate(go, new[] { open[0] }, 1f);
                 anim.randomStartFrame = false;
                 var c = go.AddComponent<BoxCollider2D>(); c.isTrigger = true; c.size = new Vector2(1.0f, 1.6f); c.offset = new Vector2(0f, 0.9f);
                 var exit = go.AddComponent<LevelExit>(); exit.animator = anim; exit.openFrames = open; exit.loopFrames = loop;
                 AddPointLight(Child(go, "Glow", new Vector3(0f, 1f, 0f)), new Color(0.4f, 1f, 0.5f), 4f, 0.9f).gameObject.AddComponent<LightFlicker>();
-                _ = sr;
                 Save<Transform>(go, "ExitPortal");
             }
 
@@ -359,9 +369,8 @@ namespace TileVania.EditorTools
             {
                 var go = new GameObject("Torch");
                 AddSprite(go, ArtSetup.GetSprite("Environment/Castle/Castle_Tiles.png", "Castle_Torch"), "Background", 60, unlit: true);
-                var l = AddPointLight(go, new Color(1f, 0.6f, 0.3f), 7f, 1.5f);
+                AddPointLight(go, new Color(1f, 0.6f, 0.3f), 7f, 1.5f);
                 go.AddComponent<LightFlicker>();
-                _ = l;
                 Save<Transform>(go, "Torch");
             }
 
@@ -385,7 +394,7 @@ namespace TileVania.EditorTools
             col.radius = radius / Mathf.Max(scale.x, 0.01f);
             var p = go.AddComponent<Projectile>();
             p.speed = speed; p.lifetime = lifetime; p.impactColor = impact; p.rotateToDirection = rotate;
-            if (!rotate) { var glow = AddPointLight(Child(go, "Glow"), impact, 2f, 0.7f); _ = glow; }
+            if (!rotate) AddPointLight(Child(go, "Glow"), impact, 2f, 0.7f);
             return Save<Projectile>(go, name);
         }
 

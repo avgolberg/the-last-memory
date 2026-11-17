@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>Pulses a warning marker's alpha so danger zones are easy to read.</summary>
     [RequireComponent(typeof(SpriteRenderer))]

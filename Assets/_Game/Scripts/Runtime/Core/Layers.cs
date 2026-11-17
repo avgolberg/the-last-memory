@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TileVania
+namespace LastMemory
 {
     /// <summary>
     /// Physics layer indices and the 2D collision matrix the game relies on.
@@ -38,16 +38,24 @@ namespace TileVania
                     Physics2D.IgnoreLayerCollision(a, b, !ShouldCollide(a, b));
         }
 
+        /// <summary>The only pairs of game layers that touch each other. Every other pair is ignored.</summary>
+        static readonly int[,] CollidingPairs =
+        {
+            { Player, Ground }, { Player, OneWay }, { Player, Ladder }, { Player, Enemy },
+            { Player, Hazards }, { Player, Interactables }, { Player, EnemyProjectile },
+            { PlayerProjectile, Ground }, { PlayerProjectile, Enemy },   // the hero's shots hit walls and enemies only
+            { EnemyProjectile, Ground },                                 // enemy shots hit walls (and the player, above)
+            { Enemy, Ground },
+        };
+
         public static bool ShouldCollide(int a, int b)
         {
-            return Pair(a, b, Player, Ground) || Pair(a, b, Player, OneWay) || Pair(a, b, Player, Ladder)
-                || Pair(a, b, Player, Enemy) || Pair(a, b, Player, Hazards) || Pair(a, b, Player, Interactables)
-                || Pair(a, b, Player, EnemyProjectile)
-                || Pair(a, b, PlayerProjectile, Ground) || Pair(a, b, PlayerProjectile, Enemy)
-                || Pair(a, b, EnemyProjectile, Ground)
-                || Pair(a, b, Enemy, Ground);
+            for (int i = 0; i < CollidingPairs.GetLength(0); i++)
+            {
+                int x = CollidingPairs[i, 0], y = CollidingPairs[i, 1];
+                if ((a == x && b == y) || (a == y && b == x)) return true; // the order of the two layers doesn't matter
+            }
+            return false;
         }
-
-        static bool Pair(int a, int b, int x, int y) => (a == x && b == y) || (a == y && b == x);
     }
 }
