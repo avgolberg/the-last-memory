@@ -1,13 +1,14 @@
-# QA Checklist (manual play-through)
+# QA Checklist: *The Last Memory* (manual play-through)
 
-Automated coverage: Play Mode tests in `Assets/_Game/Tests/PlayMode/` (`GameplayTests.cs`, `ControlsAndLadderTests.cs`, `StoryTests.cs`). Run them via **Window → General → Test Runner → PlayMode → Run All**. The items below are the things automation cannot judge: feel, readability, audio and visuals. Tick them while playing at 1920×1080 (Game view "Full HD"), then at one other resolution.
+Automated coverage: Play Mode tests in `Assets/_Game/Tests/PlayMode/` (`GameplayTests.cs`, `ControlsAndLadderTests.cs`, `StoryTests.cs`). Run them via **Window → General → Test Runner → PlayMode → Run All** (`FlashbackScreenshots` is opt-in and only captures images). The items below are the things automation cannot judge: feel, readability, audio and visuals. Tick them while playing at 1920×1080 (Game view "Full HD"), then at one other resolution.
 
 ## Setup
-- [ ] Open `Assets/_Game/Scenes/MainMenu.unity` and press Play (or play the build in `Builds/Windows/`).
+- [ ] Open `Assets/_Game/Scenes/MainMenu.unity` and press Play (or run `Builds/TheLastMemory_Windows/The Last Memory.exe`).
+- [ ] The window title and the menu title read **The Last Memory**.
 - [ ] The Console shows no errors or warnings on entering Play Mode.
 
 ## Main menu
-- [ ] Music starts (*Perilous Dungeon*). The title, subtitle, the tagline *"Every gem is something you have forgotten."*, the diorama, the hint line and four buttons are visible.
+- [ ] Music starts (*Perilous Dungeon*). The title *The Last Memory*, the tagline *"Every gem is something you have forgotten."*, the diorama, the control hint and four buttons are visible.
 - [ ] Arrow keys move between buttons, with a highlight and a select sound; Enter activates.
 - [ ] The mouse hover highlight works, and clicking works.
 - [ ] **Settings:** both sliders change volume immediately, and the values persist after restarting Play Mode.
@@ -17,10 +18,12 @@ Automated coverage: Play Mode tests in `Assets/_Game/Tests/PlayMode/` (`Gameplay
 
 ## Controls (keyboard only, no mouse)
 - [ ] ← / → move; ↑, Z and Space each jump; X shoots; Esc pauses. The mouse does nothing in gameplay.
-- [ ] ↑ + X (pressed together) fires upward **without** jumping, both standing still and while running.
+- [ ] **C fires straight up** every time: standing, running, during a jump, and right after landing. It never makes the hero jump.
+- [ ] Shooting upward at bats and at the Keeper during Fire Rain feels reliable (the main reason for C).
+- [ ] ↑ + X (pressed together) still fires upward without jumping.
 - [ ] ↑ next to a ladder climbs it instead of jumping. ↑ away from ladders jumps.
 - [ ] ↓ + Z on a wooden ledge drops through it. ↓ alone does not.
-- [ ] Gamepad (if available): stick moves and climbs, South jumps, West shoots, stick-up + West shoots up.
+- [ ] Gamepad (if available): stick moves and climbs, South jumps, West shoots, right shoulder shoots up, North examines.
 
 ## Ladders (both directions)
 - [ ] Level 1: standing on top of the shaft into the underground (x≈78), ↓ climbs down into the cave, even when not perfectly centred.
@@ -36,6 +39,7 @@ Automated coverage: Play Mode tests in `Assets/_Game/Tests/PlayMode/` (`Gameplay
 - [ ] Facing always matches movement. Shots leave from the side you face, never from inside the hero.
 - [ ] Shooting point-blank into a wall makes a spark, and no projectile passes through.
 - [ ] The camera follows smoothly with look-ahead, never shows outside the level, and pixels stay crisp.
+- [ ] **No thin lines between terrain tiles** while running and jumping, at 1920×1080, 1366×768 and a small window (e.g. 960×540). Look especially at large dirt areas in the forest and the castle floors.
 
 ## Combat and hazards
 - [ ] The slime takes 2 hits, flashes red on the first, and bursts with a sound on death.
@@ -78,10 +82,10 @@ Play once from **Play** in the main menu, without skipping. Note anything that f
 
 **Opening and forest**
 - [ ] The opening starts black with letterbox bars. "...wait for me..." appears, then it fades in on the hero lying under the old tree, who stands up and speaks two lines. The title card *The Whispering Forest: The Awakening* follows, and control returns.
-- [ ] Esc does nothing during the opening or any dialogue. Z / Space / X / Enter / C finish a line, then advance. The key that closes a dialogue doesn't also jump or shoot.
+- [ ] Esc does nothing during the opening or any dialogue. Z / Space / X / C / Enter finish a line, then advance. The key that closes a dialogue doesn't also jump or shoot.
 - [ ] Walking right, the tree dialogue plays once: the note "This time, don't open the chest.", then the notches. The number spoken matches the tally marks on the trunk, and the marks are readable at normal zoom.
 - [ ] The first gem shows a short thought at the bottom without stopping play.
-- [ ] The rusted lantern by the ruined gateway glints. Standing next to it shows "C  Examine", and C (or Enter) plays its lines.
+- [ ] The rusted lantern by the ruined gateway glints. Standing next to it shows "Enter  Examine", and Enter plays its lines. C near it shoots upward instead.
 - [ ] Both forest memory shards can be reached (the ledge east of the ruins; the high ledge on the surface east of the cave entrance). Picking one up flashes the screen briefly and shows a memory. Restarting the level doesn't bring a found shard back.
 
 **Castle**
@@ -93,12 +97,20 @@ Play once from **Play** in the main menu, without skipping. Note anything that f
 **Treasure chamber and ending**
 - [ ] After the portcullis falls and the dragon swoops in, the world is frozen while it speaks. No attack hits during the conversation. The fight starts right after, and the boss bar reads **The Keeper**.
 - [ ] Die and retry: the long conversation doesn't repeat; only "Again, then." appears.
-- [ ] On defeat, the dragon's four last lines play before it falls. Then the gold chest appears.
-- [ ] Opening the chest:
-  - The light swells and a small silhouette with a lantern appears. The reunion lines play, and the name is cut off.
-  - The silhouette dissolves, gems scatter, and the gem counter drains to 0.
-  - It fades to white, "No... not again...", then black, a knock, and the whisper.
-- [ ] Find all four shards in one cycle and finish it: the cut-off line becomes "Your name is... Li—".
+- [ ] On defeat, the Keeper's four last lines play, then it sinks to the floor by the right wall, grey and wounded, and **stays there**. It can't hurt you. Then the gold chest appears.
+- [ ] Opening the chest: the light swells, Lia's small dark figure with a lantern appears, *"You said you'd be home by morning."*, then a white flash.
+- [ ] **Flashback** (read at your own pace; lines also move on by themselves). The HUD is hidden and the letterbox stays on.
+  - Memory 1, the cottage at night: door open, window lit, Lia in the doorway. Five lines; the hero walks off toward the castle; Lia goes inside.
+  - Memory 2: the window close-up (Lia with the lantern; then the lantern is gone and the room goes dark), then the forest path with the castle on the horizon. Lia runs after the hero; the harsh exchange; the hero walks away; Lia is left alone; *"(That was the last time I ever saw her.)"*
+  - Memory 3, dawn: the hero returns with a sack, goes inside, comes out, drops the sack (gold spills), runs to the forest edge and calls her name.
+  - Memory 4, the same hall in faded warm light: the Keeper unhurt, no chest; the bargain and *"I promise."*
+  - Nothing shows what happened to Lia.
+  - One key press never skips more than one line, and never skips a whole memory.
+- [ ] Back in the present: *"Lia..."*, the Keeper's offer, *"Take it back. Take all of it."* The hero turns to the Keeper, which rises; *"I'm sorry, Lia."*; the figure dissolves, gems scatter and the counter drains to 0; white-out; *"(And again, I chose to forget.)"*; black, a knock, the whisper.
+- [ ] Find all four shards in one cycle and finish it: the hero hesitates (*"If I keep it... maybe I could still find her."* / *"Maybe."*) before choosing.
+- [ ] Do the story beats make sense to a first-time player? Is it clear why the hero feels guilty, what the bargain was, and that forgetting is the hero's own choice? Note anything unclear.
+- [ ] Is the flashback's length comfortable (about 70–100 s)? Note any line that feels too long or too fast.
+- [ ] The flashback looks right at 16:9 and at a narrower window (e.g. 1280×960): characters and the cottage stay in frame.
 - [ ] The loop:
   - The forest opening repeats word for word.
   - The hero walks to the tree, and the newest notch glows. **There is one more notch than before.**

@@ -1,4 +1,4 @@
-# Asset Credits & Licensing
+# Asset Credits & Licensing: *The Last Memory*
 
 All third-party assets were taken from the user-approved downloads in `D:\Unity Projects\TileVania_AssetDownloads`. The original archives and folders there were **not modified**. Copies used by the game live in `Assets/_Game/Art` and `Assets/_Game/Audio`. License or readme files that shipped with a pack are copied to `Assets/_Game/Art/Licenses/`.
 
@@ -13,8 +13,8 @@ All third-party assets were taken from the user-approved downloads in `D:\Unity 
 | Asset | Author | Source | License | Evidence | Used for | Modifications |
 |---|---|---|---|---|---|---|
 | Adventurer Hero (FREE) | STAEL | https://stael-l.itch.io/adventurer-hero | Custom: personal **and commercial use allowed**, modification allowed, credit appreciated but **not required**. **No redistribution or resale** of the assets themselves. | 🔎 itch.io page (fetched directly) | Player (idle, run, jump, apex, fall, attack) and the slash projectile (from `Effects/attack_1.png`) | Sliced; the projectile is a crop of one effect frame. Climb and hurt reuse existing frames. |
-| Pixel Art Platformer Asset Pack | Glax (mattbas) | https://opengameart.org/content/pixel-art-platformer-asset-pack | **CC0** (credit as "Glax" optional) | ✅ `README.txt` | Forest tiles, spikes, column, fire, grass and flowers, bushes and leaf clumps, tree trunk, clouds, stars, mountains, moon (castle), **the dragon boss**, flame projectiles | Sliced and tinted at runtime; the dragon is shown at 2× |
-| Spooky Castle Tileset (`oppcastle-tiles.png`) | see OGA page | https://opengameart.org/content/spooky-castle-tileset | ⚠️ unconfirmed | ⚠️ none bundled | Castle bricks, battlement back-walls, wooden bridges, torch, windows, fence gate, wooden door | Sliced; back-wall tinted |
+| Pixel Art Platformer Asset Pack | Glax (mattbas) | https://opengameart.org/content/pixel-art-platformer-asset-pack | **CC0** (credit as "Glax" optional) | ✅ `README.txt` | Forest tiles, spikes, column, fire, grass and flowers, bushes and leaf clumps, tree trunk, clouds, stars, mountains, moon (castle), **the dragon boss**, flame projectiles | Sliced and tinted at runtime; the dragon is shown at 2×. The tiles are also copied into `Forest_Tiles_Extruded.png` (each tile given a 1-pixel border of its own edge pixels, to prevent seams) |
+| Spooky Castle Tileset (`oppcastle-tiles.png`) | see OGA page | https://opengameart.org/content/spooky-castle-tileset | ⚠️ unconfirmed | ⚠️ none bundled | Castle bricks, battlement back-walls, wooden bridges, torch, windows, fence gate, wooden door | Sliced; back-wall tinted; tiles copied into `Castle_Tiles_Extruded.png` (1-pixel edge extrusion) |
 | 2D Platformer Enemies (`plat_*_spritesheet.png`) | see OGA page | https://opengameart.org/content/2d-platformer-enemies | ⚠️ unconfirmed | ⚠️ none bundled | Skeleton, slime, ghost, bat, spider | Sliced |
 | 2D Cave Platformer Tileset 16×16 | Rotting Pixels | https://opengameart.org/content/2d-cave-platformer-tileset-16x16 | ⚠️ unconfirmed (bundled txt has no license text) | ⚠️ `RottingPixels.txt` (credits only) | **Gems only**, as instructed | Sliced (4 gem cells) |
 | CC0 Key Icons | 7Soul1 | https://opengameart.org/content/cc0-key-icons | CC0 (per the page title) | ⚠️ bundled txt only names the DeviantArt source | Gold key, Treasure key (HUD and pickups) | none |
@@ -40,10 +40,14 @@ Drawn from code in `Assets/_Game/Scripts/Editor/GeneratedArt.cs`, so they are or
 - `Generated/Heart_Full.png`, `Heart_Empty.png`: 9×9 heart icons.
 - `Generated/Ladder.png`: 16×16 wooden ladder tile. None of the approved packs includes a ladder or rope.
 - `Generated/Pixel.png`: a 4×4 white pixel for particles, warning markers and UI fills.
+- `Generated/OldTree.png`, `Note.png`, `Lantern_Lit.png`, `Lantern_Rusted.png`: the story props.
+- `Generated/Lia_0.png`, `Lia_1.png` (Lia, standing and walking), `Cottage.png`, `Castle_Silhouette.png`, `GoldSack.png`: the ending's flashback.
+
+The story, dialogue, level layouts and code were written for this project.
 
 ## Not used: course-restricted and unknown-origin assets
 
-Everything from the original course project was moved to `Assets/_Legacy/` and is **not referenced by the new game or included in the build**. That includes the Foxfin *Super Platformer Assets* (student license, no publishing), `Spikes.png`, `Shooting Star.png`, `doorway-white.png`, the mushroom, and `Coin-Pickup.ogg`. The `Symtext` font ("All Rights Reserved") stays in `Assets/Fonts/` untouched and is not used by the new UI.
+The original course project's content (scenes, scripts and art) was removed from the project in the final clean-up. It is still in the Git history (tag `pre-modernization`). It included the Foxfin *Super Platformer Assets* (student license, no publishing), `Spikes.png`, `Shooting Star.png`, `doorway-white.png`, the mushroom, and `Coin-Pickup.ogg`. The `Symtext` font ("All Rights Reserved") stays in `Assets/Fonts/` untouched and is not used by the new UI.
 
 Not used from the downloads: the Cave tileset's environment tiles (as instructed), Glax's UI frames, items, signs and ruins tiles, and the castle "mod" tile variant.
 

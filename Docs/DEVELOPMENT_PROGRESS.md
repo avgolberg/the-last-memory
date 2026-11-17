@@ -1,6 +1,39 @@
-# Development Progress
+# Development Progress: *The Last Memory*
 
-**Branch:** `modernization`. **Recovery point:** tag `pre-modernization` on `1921e3d`, the original course project. Published on GitHub (`avgolberg/tilevania`): `modernization` is pushed and `main` is fast-forwarded to it (no force-push). **Unity:** 6000.2.13f1, URP 2D, Input System. No new packages were added.
+**Branch:** `modernization`. **Recovery point:** tag `pre-modernization` on `1921e3d`, the original course project. GitHub: `avgolberg/tilevania` (iterations 1–3 were pushed; iteration 4 is committed locally and **not pushed**). **Unity:** 6000.2.13f1, URP 2D, Input System.
+
+## Iteration 4: final polish for submission
+
+| Area | What changed |
+|---|---|
+| **Name** | The game is now **The Last Memory** everywhere players see it: window title / product name, main menu, credits, boss bar, ending panel, build folder and executable (`Builds/TheLastMemory_Windows/The Last Memory.exe`), docs and a new `README.md`. The repository URL and local folder keep the old name. Note: changing the product name moves PlayerPrefs, so a build starts with fresh settings and the notch count back at 7. |
+| **Ending** | The chest now opens into a **flashback** (`MemoryFlashback`, `MemoryActor`): four short staged memories (leaving home, the last encounter with Lia, the empty house at dawn, the bargain with the Keeper), using a small cottage-and-forest set that the level builder places to the right of the Treasure Chamber, plus new project-made pixel art (Lia, the cottage, a castle silhouette, a sack of gold). Back in the present, the Keeper offers to let the hero keep the memory and the hero **chooses to forget** ("Take it back"). With all four shards, the hero hesitates first. See `STORY_SPEC.md`. |
+| **Keeper** | After its defeat the Keeper sinks to the floor and stays in the hall (wounded, harmless) so it can take part in the ending. Its fight is unchanged. |
+| **Dialogue** | Every line reviewed and rewritten where needed: the Keeper's lines explain the promise in plain terms, the ghost hints at the bargain, the shards match scenes in the flashback, the old "Your name is... Li—" device is replaced by the hero finally saying her name. |
+| **Shooting up** | New dedicated key **C** (gamepad right shoulder): always shoots straight up, never jumps. Up + X still works. Examine moved from C to **Enter** so C has one meaning. |
+| **Tile seams** | Root cause found and fixed (below). |
+| **Structure** | Removed `Assets/_Legacy` (unused original course content, including course-restricted art) and the Cinemachine package it needed. Namespace and assemblies renamed `TileVania` → `LastMemory`; menu **Tools → The Last Memory**. `Runtime/Audio` and `Runtime/Effects` split out of `Core`. The "victory" panel is now called the ending panel in code. Python bytecode no longer tracked. The pre-modernization audit moved to `Docs/History/`. |
+| **Docs** | New `STUDENT_PROJECT_GUIDE.md` and `README.md`; `STORY_SPEC.md`, `GAME_DESIGN.md`, `QA_CHECKLIST.md`, `ASSET_CREDITS.md` and the level tools README updated. |
+
+**Tile seam investigation.** A temporary editor probe rendered the forest and castle ground tilemaps unlit over a magenta background at 1920×1080, 1600×900, 1366×768, 1280×720, 960×540 and 2560×1440, at 40 random camera positions each, both with and without the camera's pixel snapping. It counted pixels where the background showed through inside fully surrounded tiles, and pixels whose colour didn't belong to that tile's sprite.
+- *Before:* with pixel snapping, 0 problems. Without it, full-width one-pixel seam lines in 7 frames, all in the forest (1366×768, 1600×900, 960×540).
+- *Cause:* the seam row was exactly where a tile edge fell on a screen-pixel centre. That pixel samples the texel just outside the tile's rectangle, i.e. the neighbouring cell of the sprite sheet, which in the forest sheet is often transparent. The camera's pixel snapping normally keeps edges off pixel centres, which is why the seams were only occasional.
+- *Ruled out:* MSAA (off), texture filtering/compression (point, uncompressed), PPU (consistent 16), the sprite mesh type (switching to Full Rect changed nothing, so that change was reverted), and geometry gaps.
+- *Fix:* the importer copies each tilemap tile into its own slot with a 1-pixel border of its own edge pixels (`ArtSetup.ExtrudeTiles` → `Forest_Tiles_Extruded.png`, `Castle_Tiles_Extruded.png`); tilemaps use those. Geometry and colliders are unchanged.
+- *After:* the same 960 camera positions show 0 gap and 0 bleeding pixels at every resolution, snapped or not. The probe was temporary and is not in the project.
+- *Uncertainty:* I could not observe your exact playthrough setup, so I can't prove this was the exact seam you saw. It is the only seam mechanism the probe found, and it no longer occurs; please confirm during manual QA.
+
+**Validation (iteration 4)**, run in batch mode in this project (the Editor was closed; the uncommitted `Symtext SDF.asset` change was restored byte-for-byte after every run):
+
+| Check | Result |
+|---|---|
+| Full regeneration (`BuildAllBatch`) | ✅ 0 compile errors; validator **0 problems** (now also checks the flashback wiring) |
+| Layout reachability (`reach.py`) | ✅ ALL OK (layouts unchanged; `levels.py` output matches the `.txt` files) |
+| **Play Mode tests** | ✅ **60 / 60 pass** (plus 1 opt-in screenshot test, skipped in normal runs). New: flashback order and the hero's choice, one key press advances at most one line, HUD hidden in the flashback, the Keeper stays after defeat, notch count saved in PlayerPrefs, C shoots up standing / running / in the air without jumping, C no longer examines |
+| Flashback screenshots | ✅ `FlashbackScreenshots` played the real ending at normal speed and saved `Docs/Screenshots/Flashback_*.png` (17 images, reviewed) |
+| Windows player | ✅ Build succeeded, 109 MB, 0 errors; a short batch-mode launch of the `.exe` logged no errors |
+
+**Not performed:** human play-testing of the new ending's pacing and emotional clarity, the feel of the C key, and the seam fix on your display. See `QA_CHECKLIST.md`.
 
 ## Iteration 3: story, *The Last Memory*
 
@@ -69,7 +102,7 @@ The full narrative is in **`STORY_SPEC.md`**. The hero wakes in the forest with 
 | Boss | The dragon (later named "The Keeper"): 3 telegraphed attacks, enrage phase, health bar, hit and defeat effects, treasure reveal, full reset on retry |
 | UI | Main menu (Play/Settings/Credits/Quit), HUD, pause, death and victory panels, boss bar, level title cards, toasts, fades |
 | Audio | Cross-fading music per area, 24 mapped SFX, independent saved Music/SFX volume |
-| Tooling | Batch-capable builder (`Tools → TileVania → …`), scene validator, screenshot capture, Windows player build, Python level generator and reachability checker (`Tools/LevelTools`) |
+| Tooling | Batch-capable builder (`Tools → The Last Memory → …`), scene validator, screenshot capture, Windows player build, Python level generator and reachability checker (`Tools/LevelTools`) |
 | Docs | `GAME_DESIGN.md`, `ASSET_CREDITS.md`, `QA_CHECKLIST.md`, this file, `Docs/Screenshots/` |
 
 ## Verification actually performed
@@ -96,7 +129,7 @@ The full narrative is in **`STORY_SPEC.md`**. The hero wakes in the forest with 
 6. **The builder overwrites the generated scenes and prefabs.** For hand-edited scenes, either stop using Rebuild or put the changes in the layouts and builder code.
 7. Difficulty is untuned by humans. The boss has 30 HP, and the simulated bot (with healing) beat it in under 30 s. Real players will take longer, but it may still need a tuning pass.
 8. Nice-to-haves not done: save/continue, level select, footstep sounds, gamepad UI testing, a Pixel Perfect Camera, rebindable controls.
-9. The project still has the original packages, including the Git-hosted Hot Reload and the now-unused Cinemachine (still referenced by the legacy prefabs). They weren't touched because of the "avoid changes not requested" rule.
+9. The project still has the original packages, including the Git-hosted Hot Reload (opening the project needs Git and network access to resolve it). Cinemachine was removed in iteration 4 with the legacy content.
 
 ## Decisions for your review
 
@@ -104,6 +137,6 @@ The full narrative is in **`STORY_SPEC.md`**. The hero wakes in the forest with 
 - **Glax's dragon is the boss.** It is the only creature in the approved packs large enough for a boss.
 - **Level geometry comes from ASCII layouts plus an editor builder**, not hand-painted tilemaps. This made the levels verifiable, reproducible and testable from the CLI. The scenes are normal Unity scenes and can still be edited afterwards.
 - **A custom camera script replaced Cinemachine** for exact bounds clamping, pixel snapping and screen shake with no extra wiring.
-- **Legacy content moved** (`git mv`, GUIDs preserved) to `Assets/_Legacy`. The original scenes are still there; the crash-recovery scenes in `Assets/_Recovery` are untouched.
+- **Legacy content moved** (`git mv`, GUIDs preserved) to `Assets/_Legacy` (removed in iteration 4; still in the Git history).
 - **Ladder art is generated** because none of the approved packs has a ladder or rope.
 - The **Symtext font change** (pre-existing, unrelated) is left uncommitted, as requested.
