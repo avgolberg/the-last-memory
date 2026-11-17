@@ -128,7 +128,7 @@ namespace TileVania.EditorTools
             light.intensity = 0.9f;
             light.targetSortingLayers = SortingLayer.layers.Select(l => l.id).ToArray();
 
-            Sprite F(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
+            Sprite F(string n) => ArtSetup.ForestTile(n);
             Sprite Bg(string n) => ArtSetup.SingleSprite($"Environment/Forest/Forest_{n}.png");
             GameObject MakeSprite(string name, Sprite s, Vector2 pos, string layer, int order, Color tint, bool unlit = false)
             {

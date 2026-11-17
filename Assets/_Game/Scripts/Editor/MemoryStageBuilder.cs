@@ -15,7 +15,7 @@ namespace TileVania.EditorTools
     {
         static readonly Color NightGround = new Color(0.6f, 0.68f, 0.8f);
 
-        static Sprite F(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
+        static Sprite F(string n) => ArtSetup.ForestTile(n);
         static Sprite Generated(string file) => ArtSetup.SingleSprite("Generated/" + file);
 
         public static MemoryFlashback Build(StoryDirector director, DragonBoss keeper, TreasureChest chest,

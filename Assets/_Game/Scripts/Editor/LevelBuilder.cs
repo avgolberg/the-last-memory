@@ -77,8 +77,11 @@ namespace TileVania.EditorTools
             return t;
         }
 
-        static Sprite F(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
-        static Sprite C(string n) => ArtSetup.GetSprite("Environment/Castle/Castle_Tiles.png", "Castle_" + n);
+        // Tilemap tiles come from the extruded sheets (no seams); props from the original sheets.
+        static Sprite F(string n) => ArtSetup.ForestTile(n);
+        static Sprite C(string n) => ArtSetup.CastleTile(n);
+        static Sprite ForestProp(string n) => ArtSetup.GetSprite("Environment/Forest/Forest_Tiles.png", "Forest_" + n);
+        static Sprite CastleProp(string n) => ArtSetup.GetSprite("Environment/Castle/Castle_Tiles.png", "Castle_" + n);
 
         static Tilemap MakeTilemap(GameObject grid, string name, string sortingLayer, int order, int layer, Color color)
         {
@@ -258,23 +261,23 @@ namespace TileVania.EditorTools
                         case '^':
                         {
                             var spike = Place("Hazard_Spikes", feet, "Hazards");
-                            spike.GetComponent<SpriteRenderer>().sprite = F("Spike_" + rng.Next(3));
+                            spike.GetComponent<SpriteRenderer>().sprite = ForestProp("Spike_" + rng.Next(3));
                             break;
                         }
                         case 't': Place("Torch", c, "Lights"); break;
-                        case 'w': Deco("Window", C((x & 1) == 0 ? "WindowRound" : "WindowNarrow"), c, 45, backTint); break;
+                        case 'w': Deco("Window", CastleProp((x & 1) == 0 ? "WindowRound" : "WindowNarrow"), c, 45, backTint); break;
                         case ',':
                             if (castle) break;
                             if (rng.Next(3) == 0) Deco("Bush", ArtSetup.GetSprite("Environment/Forest/Forest_leaves.png", "Bush_Small"), feet + new Vector2(0, -0.1f), 45, Color.white);
                             else front.SetTile(new Vector3Int(x, y, 0), TileFor(F("Grass_" + rng.Next(2))));
                             break;
                         case '*': front.SetTile(new Vector3Int(x, y, 0), TileFor(F("Flower_" + rng.Next(2)))); break;
-                        case '|': Deco("Column", F("Column"), feet, 42, new Color(0.85f, 0.85f, 0.9f)); break;
+                        case '|': Deco("Column", ForestProp("Column"), feet, 42, new Color(0.85f, 0.85f, 0.9f)); break;
                         case 'A':
                             // ruined gateway: two broken columns flanking the entrance
-                            Deco("Column", F("Column"), new Vector2(x + 0.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
-                            Deco("Column", F("Column"), new Vector2(x + 3.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
-                            Deco("ColumnTop", F("ColumnShort"), new Vector2(x + 3.5f, y + 1.5f), 42, new Color(0.85f, 0.85f, 0.9f));
+                            Deco("Column", ForestProp("Column"), new Vector2(x + 0.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
+                            Deco("Column", ForestProp("Column"), new Vector2(x + 3.5f, y), 42, new Color(0.85f, 0.85f, 0.9f));
+                            Deco("ColumnTop", ForestProp("ColumnShort"), new Vector2(x + 3.5f, y + 1.5f), 42, new Color(0.85f, 0.85f, 0.9f));
                             break;
                         case 'B':
                         {
@@ -382,7 +385,7 @@ namespace TileVania.EditorTools
                     var dc = door.AddComponent<BoxCollider2D>(); dc.size = new Vector2(1f, 3f); dc.offset = new Vector2(0.5f, 1.5f);
                     var dv = new GameObject("Visual");
                     dv.transform.SetParent(door.transform, false);
-                    var dsr = ContentBuilder.AddSprite(dv, C("FenceHalf"), "Platforms", -1);
+                    var dsr = ContentBuilder.AddSprite(dv, CastleProp("FenceHalf"), "Platforms", -1);
                     dsr.drawMode = SpriteDrawMode.Tiled;
                     dsr.size = new Vector2(1f, 3f);
                     // Tiled sprites are centred on their pivot; offset so the bars fill the doorway.
